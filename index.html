@@ -59,7 +59,6 @@ border-bottom:1px solid #222;
 
 <h1>Euroclear Narrative Intelligence Dashboard</h1>
 
-
 <div class="grid">
 
 <div class="card">
@@ -78,7 +77,6 @@ border-bottom:1px solid #222;
 </div>
 
 </div>
-
 
 
 <div class="card">
@@ -112,6 +110,12 @@ border-bottom:1px solid #222;
 
 
 <div class="card">
+<h3>Media by Region</h3>
+<canvas id="regionChart"></canvas>
+</div>
+
+
+<div class="card">
 <h3>Narrative Drivers</h3>
 <div id="drivers"></div>
 </div>
@@ -121,7 +125,6 @@ border-bottom:1px solid #222;
 <h3>Latest Euroclear News</h3>
 <div id="news"></div>
 </div>
-
 
 
 <script>
@@ -136,7 +139,6 @@ const data=await res.json()
 const articles=data.articles || []
 
 document.getElementById("total").innerText=articles.length
-
 
 
 let russia=0
@@ -157,8 +159,8 @@ Negative:0
 let mentionsByDay={}
 let russiaByDay={}
 let sources={}
+let regions={}
 let drivers={}
-
 
 
 const newsDiv=document.getElementById("news")
@@ -167,11 +169,9 @@ const driversDiv=document.getElementById("drivers")
 newsDiv.innerHTML=""
 driversDiv.innerHTML=""
 
-
 articles.forEach(a=>{
 
 const text=(a.title || "").toLowerCase()
-
 
 /* Russia detection */
 
@@ -180,36 +180,31 @@ russia++
 topics.Russia++
 }
 
-
 /* Topic detection */
 
 if(text.includes("sanction") || text.includes("eu") || text.includes("regulation")){
 topics.Regulation++
 }
 
-if(text.includes("technology") || text.includes("tech") || text.includes("platform") || text.includes("infrastructure")){
+if(text.includes("technology") || text.includes("tech") || text.includes("platform")){
 topics.Technology++
 }
 
-if(text.includes("digital") || text.includes("crypto") || text.includes("token") || text.includes("blockchain")){
+if(text.includes("digital") || text.includes("crypto") || text.includes("blockchain")){
 topics["Digital Assets"]++
 }
 
-
 /* Sentiment */
 
-if(text.includes("profit") || text.includes("growth") || text.includes("gain")){
+if(text.includes("profit") || text.includes("growth")){
 sentiment.Positive++
 }
-
-else if(text.includes("sanction") || text.includes("freeze") || text.includes("dispute") || text.includes("lawsuit")){
+else if(text.includes("sanction") || text.includes("freeze") || text.includes("lawsuit")){
 sentiment.Negative++
 }
-
 else{
 sentiment.Neutral++
 }
-
 
 /* Time series */
 
@@ -230,14 +225,47 @@ russiaByDay[date]++
 
 }
 
-
-/* Media sources */
+/* Source filtering */
 
 let source=(a.domain || "").replace("www.","")
 
-if(!source){
-source="unknown"
-}
+let allowedSources=[
+
+"reuters.com",
+"bloomberg.com",
+"ft.com",
+"politico.com",
+"politico.eu",
+"economist.com",
+"wsj.com",
+
+"nytimes.com",
+"washingtonpost.com",
+"cnn.com",
+
+"bbc.com",
+"bbc.co.uk",
+"theguardian.com",
+
+"elpais.com",
+"lemonde.fr",
+"spiegel.de",
+"ansa.it",
+
+"nikkei.com",
+"scmp.com",
+"straitstimes.com",
+
+"aljazeera.com",
+"arabnews.com",
+
+"tass.com",
+"interfax.ru",
+"kyivpost.com"
+
+]
+
+if(allowedSources.includes(source)){
 
 if(!sources[source]){
 sources[source]=0
@@ -246,7 +274,31 @@ sources[source]=0
 sources[source]++
 
 
-/* Narrative drivers extraction */
+/* REGION MAPPING */
+
+let region="Other"
+
+if(["nytimes.com","washingtonpost.com","cnn.com"].includes(source)) region="US"
+
+if(["bbc.com","bbc.co.uk","theguardian.com"].includes(source)) region="UK"
+
+if(["elpais.com","lemonde.fr","spiegel.de","ansa.it","politico.eu"].includes(source)) region="Europe"
+
+if(["nikkei.com","scmp.com","straitstimes.com"].includes(source)) region="Asia"
+
+if(["aljazeera.com","arabnews.com"].includes(source)) region="Middle East"
+
+if(["tass.com","interfax.ru","kyivpost.com"].includes(source)) region="Russia/CIS"
+
+if(!regions[region]){
+regions[region]=0
+}
+
+regions[region]++
+
+}
+
+/* Narrative drivers */
 
 let keywords=[
 "sanctions",
@@ -254,40 +306,28 @@ let keywords=[
 "russian assets",
 "asset seizure",
 "litigation",
-"lawsuit",
-"regulation",
 "digital assets",
 "blockchain",
 "settlement",
-"clearing system",
-"interest profits"
+"clearing system"
 ]
 
 keywords.forEach(k=>{
-
 if(text.includes(k)){
-
 if(!drivers[k]){
 drivers[k]=0
 }
-
 drivers[k]++
-
 }
-
 })
 
 })
-
 
 
 /* Russia share */
 
 const share=((russia/articles.length)*100).toFixed(1)
-
 document.getElementById("russiaShare").innerText=share+"%"
-
-
 
 /* Momentum */
 
@@ -302,129 +342,76 @@ const momentum=(latestShare-previousShare).toFixed(1)
 
 document.getElementById("momentum").innerText=momentum+"%"
 
-
-
-/* News feed */
+/* News */
 
 articles.slice(0,10).forEach(a=>{
-
 const item=document.createElement("div")
 item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 newsDiv.appendChild(item)
-
 })
 
-
-
-/* Narrative drivers panel */
+/* Drivers */
 
 const sortedDrivers=Object.entries(drivers)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,8)
 
 sortedDrivers.forEach(d=>{
-
 const item=document.createElement("div")
-
 item.className="driver"
-
 item.innerText=d[0]+" ("+d[1]+")"
-
 driversDiv.appendChild(item)
-
 })
 
-
-
-/* Mentions trend */
+/* Charts */
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
-data:{
-labels:labels,
-datasets:[{
-label:"Euroclear mentions",
-data:values,
-tension:0.3
-}]
-}
+data:{labels:labels,datasets:[{label:"Euroclear mentions",data:values,tension:0.3}]}
 })
 
-
-
-/* Russia trend */
-
 const russiaShareTrend=labels.map((d,i)=>{
-
 let total=values[i]
 let rus=russiaValues[i]
-
 return total? (rus/total)*100 : 0
-
 })
 
 new Chart(document.getElementById("russiaTrendChart"),{
 type:"line",
-data:{
-labels:labels,
-datasets:[{
-label:"Russia narrative %",
-data:russiaShareTrend,
-tension:0.3
-}]
-}
+data:{labels:labels,datasets:[{label:"Russia narrative %",data:russiaShareTrend,tension:0.3}]}
 })
-
-
-
-/* Topics */
 
 new Chart(document.getElementById("topicChart"),{
 type:"pie",
-data:{
-labels:Object.keys(topics),
-datasets:[{
-data:Object.values(topics)
-}]
-}
+data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 })
-
-
-
-/* Sentiment */
 
 new Chart(document.getElementById("sentimentChart"),{
 type:"pie",
-data:{
-labels:Object.keys(sentiment),
-datasets:[{
-data:Object.values(sentiment)
-}]
-}
+data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
 })
-
-
-
-/* Media sources */
 
 const sortedSources=Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
-.slice(0,5)
+.slice(0,6)
 
 new Chart(document.getElementById("sourceChart"),{
 type:"bar",
 data:{
 labels:sortedSources.map(s=>s[0]),
-datasets:[{
-label:"Mentions",
-data:sortedSources.map(s=>s[1])
-}]
+datasets:[{label:"Mentions",data:sortedSources.map(s=>s[1])}]
+}
+})
+
+new Chart(document.getElementById("regionChart"),{
+type:"pie",
+data:{
+labels:Object.keys(regions),
+datasets:[{data:Object.values(regions)}]
 }
 })
 
 }
-
-
 
 loadNews()
 
