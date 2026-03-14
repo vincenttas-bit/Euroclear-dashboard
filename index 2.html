@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Euroclear Live Narrative Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{
+font-family: Arial;
+background:#0b0f14;
+color:#e6edf3;
+margin:0;
+padding:30px;
+}
+h1{margin-bottom:5px;}
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+grid-gap:25px;
+margin-top:20px;
+}
+.card{
+background:#121821;
+padding:20px;
+border-radius:10px;
+}
+.metric{
+font-size:44px;
+font-weight:bold;
+}
+.small{
+color:#9fb0c0;
+font-size:14px;
+}
+.article{
+margin-bottom:10px;
+}
+a{color:#9ecbff;text-decoration:none;}
+</style>
+</head>
+
+<body>
+
+<h1>Euroclear Global Narrative Monitor</h1>
+<div class="small">Live monitoring of global media mentions</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Total Articles (latest pull)</h3>
+<div id="totalMentions" class="metric">--</div>
+</div>
+
+<div class="card">
+<h3>Russia Narrative Share</h3>
+<div id="russiaShare" class="metric">--</div>
+</div>
+
+<div class="card">
+<h3>Topic Distribution</h3>
+<canvas id="topicChart"></canvas>
+</div>
+
+<div class="card">
+<h3>Latest Euroclear News</h3>
+<div id="news"></div>
+</div>
+
+</div>
+
+<script>
+
+async function fetchNews(){
+
+const url = "https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+
+const res = await fetch(url)
+const data = await res.json()
+
+const articles = data.articles || []
+
+document.getElementById("totalMentions").innerText = articles.length
+
+let russia=0
+let regulation=0
+let technology=0
+let digital=0
+
+const newsDiv=document.getElementById("news")
+
+articles.slice(0,10).forEach(a=>{
+
+const text=(a.title + " " + a.seendate).toLowerCase()
+
+if(text.includes("russia")) russia++
+if(text.includes("regulation") || text.includes("eu")) regulation++
+if(text.includes("technology") || text.includes("tech")) technology++
+if(text.includes("digital") || text.includes("crypto")) digital++
+
+const div=document.createElement("div")
+div.className="article"
+div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+newsDiv.appendChild(div)
+
+})
+
+const share=((russia/articles.length)*100).toFixed(1)
+document.getElementById("russiaShare").innerText=share+"%"
+
+const topics={
+Russia:russia,
+Regulation:regulation,
+Technology:technology,
+"Digital Assets":digital
+}
+
+new Chart(document.getElementById("topicChart"),{
+type:"pie",
+data:{
+labels:Object.keys(topics),
+datasets:[{data:Object.values(topics)}]
+}
+})
+
+}
+
+fetchNews()
+
+</script>
+
+</body>
+</html>
