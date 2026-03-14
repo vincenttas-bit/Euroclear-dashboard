@@ -1,135 +1,25 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Euroclear Narrative Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body{
-font-family: Arial;
-margin:40px;
-background:#f4f6f8;
-}
-.card{
-background:white;
-padding:20px;
-border-radius:12px;
-box-shadow:0 2px 8px rgba(0,0,0,0.1);
-margin-bottom:30px;
-}
-h1{
-margin-bottom:10px;
-}
-.metric{
-font-size:42px;
-font-weight:bold;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Euroclear Dashboard</title>
 </head>
 <body>
-
-<h1>Euroclear Narrative Dashboard</h1>
-
-<div class="card">
-<h3>Russia Narrative Share</h3>
-<div id="russiaShare" class="metric">--</div>
-</div>
-
-<div class="card">
-<h3>Euroclear Mentions Over Time</h3>
-<canvas id="mentionsChart"></canvas>
-</div>
-
-<div class="card">
-<h3>Topic Distribution</h3>
-<canvas id="topicChart"></canvas>
-</div>
-
-<div class="card">
-<h3>Euroclear Mentions Trend</h3>
-<canvas id="mentionsChart"></canvas>
-</div>
-  
-<script>
-async function loadData(){
-
-const res = await fetch("data.json")
-const data = await res.json()
-
-const dates = data.map(d=>d.date)
-const mentions = data.map(d=>d.mentions)
-const russia = data.map(d=>d.russia_mentions)
-
-const totalMentions = mentions.reduce((a,b)=>a+b,0)
-const totalRussia = russia.reduce((a,b)=>a+b,0)
-const share = ((totalRussia/totalMentions)*100).toFixed(1)
-
-document.getElementById("russiaShare").innerText = share + "%"
-
-new Chart(document.getElementById("mentionsChart"),{
-type:"line",
-data:{
-labels:dates,
-datasets:[{
-label:"Euroclear Mentions",
-data:mentions,
-fill:false,
-tension:0.3
-}]
-}
-})
-
-let topicTotals = {}
-
-data.forEach(d=>{
-for(const t in d.topics){
-topicTotals[t]=(topicTotals[t]||0)+d.topics[t]
-}
-})
-
-new Chart(document.getElementById("topicChart"),{
-type:"pie",
-data:{
-labels:Object.keys(topicTotals),
-datasets:[{
-data:Object.values(topicTotals)
-}]
-}
-})
-
-let mentionsByDay = {};
-
-articles.forEach(a => {
-
-  let date = a.seendate.substring(0,8);
-  
-  if(!mentionsByDay[date]){
-      mentionsByDay[date] = 0;
-  }
-
-  mentionsByDay[date]++;
-
-});
-
-const labels = Object.keys(mentionsByDay);
-const values = Object.values(mentionsByDay);
-
-new Chart(document.getElementById("mentionsChart"),{
-  type:"line",
-  data:{
-    labels:labels,
-    datasets:[{
-      label:"Euroclear mentions",
-      data:values,
-      tension:0.3
-    }]
-  }
-});  
-}
-
-loadData()
-</script>
-
+    <div id="first-canvas-container">
+        <canvas id="first-canvas"></canvas>
+    </div>
+    <div id="second-canvas-container">
+        <canvas id="second-canvas"></canvas>
+    </div>
+    <script>
+        try {
+            const ctx1 = document.getElementById('first-canvas').getContext('2d');
+            const ctx2 = document.getElementById('second-canvas').getContext('2d');
+            // Your drawing code here
+        } catch (error) {
+            console.error('An error occurred while accessing the canvas:', error);
+        }
+    </script>
 </body>
 </html>
