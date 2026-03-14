@@ -21,7 +21,7 @@ margin-bottom:30px;
 
 .grid{
 display:grid;
-grid-template-columns:1fr 1fr;
+grid-template-columns:1fr 1fr 1fr;
 grid-gap:20px;
 }
 
@@ -33,7 +33,7 @@ margin-bottom:20px;
 }
 
 .metric{
-font-size:40px;
+font-size:36px;
 font-weight:bold;
 }
 
@@ -67,6 +67,11 @@ margin-top:10px;
 <div id="russiaShare" class="metric">Loading...</div>
 </div>
 
+<div class="card">
+<h3>Narrative Momentum</h3>
+<div id="momentum" class="metric">Loading...</div>
+</div>
+
 </div>
 
 
@@ -90,6 +95,12 @@ margin-top:10px;
 
 
 <div class="card">
+<h3>Sentiment Analysis</h3>
+<canvas id="sentimentChart"></canvas>
+</div>
+
+
+<div class="card">
 <h3>Top Media Sources</h3>
 <canvas id="sourceChart"></canvas>
 </div>
@@ -106,7 +117,7 @@ margin-top:10px;
 
 async function loadNews(){
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=120&format=json"
 
 const res=await fetch(url)
 const data=await res.json()
@@ -126,6 +137,11 @@ Technology:0,
 "Digital Assets":0
 }
 
+let sentiment={
+Positive:0,
+Neutral:0,
+Negative:0
+}
 
 let mentionsByDay={}
 let russiaByDay={}
@@ -143,6 +159,9 @@ articles.forEach(a=>{
 const text=(a.title || "").toLowerCase()
 
 
+
+/* RUSSIA DETECTION */
+
 if(text.includes("russia") || text.includes("kremlin")){
 
 russia++
@@ -151,27 +170,52 @@ topics.Russia++
 }
 
 
+
+/* TOPIC DETECTION */
+
 if(text.includes("sanction") || text.includes("eu") || text.includes("regulation")){
 
 topics.Regulation++
 
 }
 
-
-if(text.includes("technology") || text.includes("tech") || text.includes("platform")){
+if(text.includes("technology") || text.includes("tech") || text.includes("platform") || text.includes("infrastructure")){
 
 topics.Technology++
 
 }
 
-
-if(text.includes("digital") || text.includes("crypto") || text.includes("token")){
+if(text.includes("digital") || text.includes("crypto") || text.includes("token") || text.includes("blockchain")){
 
 topics["Digital Assets"]++
 
 }
 
 
+
+/* SENTIMENT DETECTION */
+
+if(text.includes("profit") || text.includes("growth") || text.includes("gain")){
+
+sentiment.Positive++
+
+}
+
+else if(text.includes("sanction") || text.includes("freeze") || text.includes("dispute") || text.includes("lawsuit")){
+
+sentiment.Negative++
+
+}
+
+else{
+
+sentiment.Neutral++
+
+}
+
+
+
+/* TIME SERIES */
 
 if(a.seendate){
 
@@ -196,6 +240,8 @@ russiaByDay[date]++
 
 
 
+/* MEDIA SOURCES */
+
 if(a.source){
 
 if(!sources[a.source]){
@@ -212,11 +258,31 @@ sources[a.source]++
 
 
 
+/* RUSSIA SHARE */
+
 const share=((russia/articles.length)*100).toFixed(1)
 
 document.getElementById("russiaShare").innerText=share+"%"
 
 
+
+/* MOMENTUM */
+
+const labels=Object.keys(mentionsByDay)
+const values=Object.values(mentionsByDay)
+const russiaValues=Object.values(russiaByDay)
+
+const latestShare=russiaValues[russiaValues.length-1] / values[values.length-1] * 100
+
+const previousShare=russiaValues[russiaValues.length-7] / values[values.length-7] * 100 || 0
+
+const momentum=(latestShare-previousShare).toFixed(1)
+
+document.getElementById("momentum").innerText=momentum+"%"
+
+
+
+/* NEWS FEED */
 
 articles.slice(0,10).forEach(a=>{
 
@@ -230,11 +296,7 @@ newsDiv.appendChild(item)
 
 
 
-const labels=Object.keys(mentionsByDay)
-const values=Object.values(mentionsByDay)
-const russiaValues=Object.values(russiaByDay)
-
-
+/* MENTIONS TREND */
 
 new Chart(document.getElementById("mentionsChart"),{
 
@@ -253,6 +315,8 @@ tension:0.3
 
 
 
+/* RUSSIA TREND */
+
 const russiaShareTrend=labels.map((d,i)=>{
 
 let total=values[i]
@@ -261,8 +325,6 @@ let rus=russiaValues[i]
 return total? (rus/total)*100 : 0
 
 })
-
-
 
 new Chart(document.getElementById("russiaTrendChart"),{
 
@@ -281,6 +343,8 @@ tension:0.3
 
 
 
+/* TOPICS */
+
 new Chart(document.getElementById("topicChart"),{
 
 type:"pie",
@@ -296,11 +360,28 @@ data:Object.values(topics)
 
 
 
+/* SENTIMENT */
+
+new Chart(document.getElementById("sentimentChart"),{
+
+type:"pie",
+
+data:{
+labels:Object.keys(sentiment),
+datasets:[{
+data:Object.values(sentiment)
+}]
+}
+
+})
+
+
+
+/* MEDIA SOURCES */
+
 const sortedSources=Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,5)
-
-
 
 new Chart(document.getElementById("sourceChart"),{
 
@@ -315,8 +396,6 @@ data:sortedSources.map(s=>s[1])
 }
 
 })
-
-
 
 }
 
