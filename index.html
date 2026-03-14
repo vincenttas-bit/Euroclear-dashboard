@@ -98,6 +98,34 @@ data:Object.values(topicTotals)
 }
 })
 
+let mentionsByDay = {};
+
+articles.forEach(a => {
+
+  let date = a.seendate.substring(0,8);
+  
+  if(!mentionsByDay[date]){
+      mentionsByDay[date] = 0;
+  }
+
+  mentionsByDay[date]++;
+
+});
+
+const labels = Object.keys(mentionsByDay);
+const values = Object.values(mentionsByDay);
+
+new Chart(document.getElementById("mentionsChart"),{
+  type:"line",
+  data:{
+    labels:labels,
+    datasets:[{
+      label:"Euroclear mentions",
+      data:values,
+      tension:0.3
+    }]
+  }
+});  
 }
 
 loadData()
