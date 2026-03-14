@@ -54,7 +54,6 @@ margin-top:10px;
 
 <h1>Euroclear Narrative Intelligence Dashboard</h1>
 
-
 <div class="grid">
 
 <div class="card">
@@ -73,7 +72,6 @@ margin-top:10px;
 </div>
 
 </div>
-
 
 
 <div class="card">
@@ -112,7 +110,6 @@ margin-top:10px;
 </div>
 
 
-
 <script>
 
 async function loadNews(){
@@ -125,7 +122,6 @@ const data=await res.json()
 const articles=data.articles || []
 
 document.getElementById("total").innerText=articles.length
-
 
 
 let russia=0
@@ -148,10 +144,8 @@ let russiaByDay={}
 let sources={}
 
 
-
 const newsDiv=document.getElementById("news")
 newsDiv.innerHTML=""
-
 
 
 articles.forEach(a=>{
@@ -159,130 +153,103 @@ articles.forEach(a=>{
 const text=(a.title || "").toLowerCase()
 
 
-
-/* RUSSIA DETECTION */
+/* Russia detection */
 
 if(text.includes("russia") || text.includes("kremlin")){
-
 russia++
 topics.Russia++
-
 }
 
 
-
-/* TOPIC DETECTION */
+/* Topic detection */
 
 if(text.includes("sanction") || text.includes("eu") || text.includes("regulation")){
-
 topics.Regulation++
-
 }
 
 if(text.includes("technology") || text.includes("tech") || text.includes("platform") || text.includes("infrastructure")){
-
 topics.Technology++
-
 }
 
 if(text.includes("digital") || text.includes("crypto") || text.includes("token") || text.includes("blockchain")){
-
 topics["Digital Assets"]++
-
 }
 
 
-
-/* SENTIMENT DETECTION */
+/* Sentiment detection */
 
 if(text.includes("profit") || text.includes("growth") || text.includes("gain")){
-
 sentiment.Positive++
-
 }
 
 else if(text.includes("sanction") || text.includes("freeze") || text.includes("dispute") || text.includes("lawsuit")){
-
 sentiment.Negative++
-
 }
 
 else{
-
 sentiment.Neutral++
-
 }
 
 
-
-/* TIME SERIES */
+/* Time series */
 
 if(a.seendate){
 
 let date=a.seendate.substring(0,8)
 
 if(!mentionsByDay[date]){
-
 mentionsByDay[date]=0
 russiaByDay[date]=0
-
 }
 
 mentionsByDay[date]++
 
 if(text.includes("russia")){
-
 russiaByDay[date]++
-
 }
 
 }
 
 
+/* MEDIA SOURCES FIX */
 
-/* MEDIA SOURCES */
+let source=(a.domain || "").replace("www.","")
 
-if(a.source){
-
-if(!sources[a.source]){
-
-sources[a.source]=0
-
+if(!source){
+source="unknown"
 }
 
-sources[a.source]++
-
+if(!sources[source]){
+sources[source]=0
 }
+
+sources[source]++
 
 })
 
 
-
-/* RUSSIA SHARE */
+/* Russia share */
 
 const share=((russia/articles.length)*100).toFixed(1)
-
 document.getElementById("russiaShare").innerText=share+"%"
 
 
-
-/* MOMENTUM */
+/* Momentum */
 
 const labels=Object.keys(mentionsByDay)
 const values=Object.values(mentionsByDay)
 const russiaValues=Object.values(russiaByDay)
 
-const latestShare=russiaValues[russiaValues.length-1] / values[values.length-1] * 100
+const latestShare=(russiaValues[russiaValues.length-1]/values[values.length-1])*100 || 0
 
-const previousShare=russiaValues[russiaValues.length-7] / values[values.length-7] * 100 || 0
+const previousShare=(russiaValues[russiaValues.length-7]/values[values.length-7])*100 || 0
 
 const momentum=(latestShare-previousShare).toFixed(1)
 
 document.getElementById("momentum").innerText=momentum+"%"
 
 
-
-/* NEWS FEED */
+/* News feed */
 
 articles.slice(0,10).forEach(a=>{
 
@@ -295,13 +262,10 @@ newsDiv.appendChild(item)
 })
 
 
-
-/* MENTIONS TREND */
+/* Mentions trend */
 
 new Chart(document.getElementById("mentionsChart"),{
-
 type:"line",
-
 data:{
 labels:labels,
 datasets:[{
@@ -310,12 +274,10 @@ data:values,
 tension:0.3
 }]
 }
-
 })
 
 
-
-/* RUSSIA TREND */
+/* Russia trend */
 
 const russiaShareTrend=labels.map((d,i)=>{
 
@@ -327,9 +289,7 @@ return total? (rus/total)*100 : 0
 })
 
 new Chart(document.getElementById("russiaTrendChart"),{
-
 type:"line",
-
 data:{
 labels:labels,
 datasets:[{
@@ -338,55 +298,43 @@ data:russiaShareTrend,
 tension:0.3
 }]
 }
-
 })
 
 
-
-/* TOPICS */
+/* Topics */
 
 new Chart(document.getElementById("topicChart"),{
-
 type:"pie",
-
 data:{
 labels:Object.keys(topics),
 datasets:[{
 data:Object.values(topics)
 }]
 }
-
 })
 
 
-
-/* SENTIMENT */
+/* Sentiment */
 
 new Chart(document.getElementById("sentimentChart"),{
-
 type:"pie",
-
 data:{
 labels:Object.keys(sentiment),
 datasets:[{
 data:Object.values(sentiment)
 }]
 }
-
 })
 
 
-
-/* MEDIA SOURCES */
+/* Media sources */
 
 const sortedSources=Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,5)
 
 new Chart(document.getElementById("sourceChart"),{
-
 type:"bar",
-
 data:{
 labels:sortedSources.map(s=>s[0]),
 datasets:[{
@@ -394,12 +342,9 @@ label:"Mentions",
 data:sortedSources.map(s=>s[1])
 }]
 }
-
 })
 
 }
-
-
 
 loadNews()
 
