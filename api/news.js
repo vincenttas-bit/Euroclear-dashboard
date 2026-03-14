@@ -16,4 +16,4 @@ res.status(500).json({ error: "GDELT request failed" });
 
 }
 
-
+}
