@@ -1,25 +1,253 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Euroclear Dashboard</title>
+<meta charset="UTF-8">
+<title>Euroclear Narrative Monitor</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0b0f14;
+color:white;
+padding:30px;
+}
+
+h1{
+margin-bottom:30px;
+}
+
+.card{
+background:#121821;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+}
+
+.metric{
+font-size:40px;
+font-weight:bold;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+grid-gap:20px;
+}
+
+a{
+color:#9ecbff;
+text-decoration:none;
+}
+
+canvas{
+margin-top:10px;
+}
+
+</style>
+
 </head>
+
 <body>
-    <div id="first-canvas-container">
-        <canvas id="first-canvas"></canvas>
-    </div>
-    <div id="second-canvas-container">
-        <canvas id="second-canvas"></canvas>
-    </div>
-    <script>
-        try {
-            const ctx1 = document.getElementById('first-canvas').getContext('2d');
-            const ctx2 = document.getElementById('second-canvas').getContext('2d');
-            // Your drawing code here
-        } catch (error) {
-            console.error('An error occurred while accessing the canvas:', error);
-        }
-    </script>
+
+<h1>Euroclear Global Narrative Monitor</h1>
+
+<div class="grid">
+
+<div class="card">
+<h3>Total Euroclear Articles</h3>
+<div id="total" class="metric">Loading...</div>
+</div>
+
+<div class="card">
+<h3>Russia Narrative Share</h3>
+<div id="russiaShare" class="metric">Loading...</div>
+</div>
+
+</div>
+
+
+<div class="card">
+<h3>Euroclear Mentions Trend</h3>
+<canvas id="mentionsChart"></canvas>
+</div>
+
+
+<div class="card">
+<h3>Topic Distribution</h3>
+<canvas id="topicChart"></canvas>
+</div>
+
+
+<div class="card">
+<h3>Latest Euroclear News</h3>
+<div id="news"></div>
+</div>
+
+
+
+<script>
+
+async function loadNews(){
+
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+
+const res=await fetch(url)
+const data=await res.json()
+
+const articles=data.articles || []
+
+document.getElementById("total").innerText=articles.length
+
+
+let russia=0
+
+let topics={
+Russia:0,
+Regulation:0,
+Technology:0,
+"Digital Assets":0
+}
+
+
+let mentionsByDay={}
+
+
+const newsDiv=document.getElementById("news")
+newsDiv.innerHTML=""
+
+
+
+articles.forEach(a=>{
+
+const text=(a.title || "").toLowerCase()
+
+
+if(text.includes("russia")){
+
+russia++
+topics.Russia++
+
+}
+
+
+if(text.includes("sanction") || text.includes("eu")){
+
+topics.Regulation++
+
+}
+
+
+if(text.includes("technology") || text.includes("tech")){
+
+topics.Technology++
+
+}
+
+
+if(text.includes("digital") || text.includes("crypto")){
+
+topics["Digital Assets"]++
+
+}
+
+
+
+if(a.seendate){
+
+let date=a.seendate.substring(0,8)
+
+if(!mentionsByDay[date]){
+
+mentionsByDay[date]=0
+
+}
+
+mentionsByDay[date]++
+
+}
+
+
+
+})
+
+
+const share=((russia/articles.length)*100).toFixed(1)
+
+document.getElementById("russiaShare").innerText=share+"%"
+
+
+articles.slice(0,10).forEach(a=>{
+
+const item=document.createElement("div")
+
+item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
+newsDiv.appendChild(item)
+
+})
+
+
+
+const labels=Object.keys(mentionsByDay)
+const values=Object.values(mentionsByDay)
+
+
+new Chart(document.getElementById("mentionsChart"),{
+
+type:"line",
+
+data:{
+
+labels:labels,
+
+datasets:[{
+
+label:"Euroclear mentions",
+
+data:values,
+
+tension:0.3
+
+}]
+
+}
+
+})
+
+
+
+new Chart(document.getElementById("topicChart"),{
+
+type:"pie",
+
+data:{
+
+labels:Object.keys(topics),
+
+datasets:[{
+
+data:Object.values(topics)
+
+}]
+
+}
+
+})
+
+}
+
+
+
+loadNews()
+
+
+setInterval(loadNews,3600000)
+
+</script>
+
 </body>
+
 </html>
