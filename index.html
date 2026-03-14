@@ -10,7 +10,7 @@
 
 body{
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-background:#0a0f14;
+background:#0b0f14;
 color:#e6edf3;
 margin:0;
 padding:30px;
@@ -21,7 +21,7 @@ margin:auto;
 h1{
 font-weight:600;
 margin-bottom:20px;
-color:#ffffff;
+color:#fff;
 }
 
 /* KPI STRIP */
@@ -29,8 +29,8 @@ color:#ffffff;
 .kpi-strip{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:12px;
-margin-bottom:20px;
+gap:14px;
+margin-bottom:22px;
 }
 
 .kpi{
@@ -46,12 +46,12 @@ color:#8b9bb0;
 }
 
 .kpi-value{
-font-size:32px;
+font-size:30px;
 font-weight:600;
 margin-top:6px;
 }
 
-/* MAIN GRID */
+/* CHART GRID */
 
 .grid{
 display:grid;
@@ -80,7 +80,7 @@ canvas{
 max-height:230px;
 }
 
-/* ANALYTICS ROW */
+/* ANALYTICS */
 
 .analytics{
 display:grid;
@@ -88,8 +88,6 @@ grid-template-columns:1fr 1fr;
 gap:18px;
 margin-bottom:20px;
 }
-
-/* TEXT PANELS */
 
 .list-item{
 padding:6px 0;
@@ -101,8 +99,6 @@ a{
 color:#9cc7ff;
 text-decoration:none;
 }
-
-/* REGION SECTION */
 
 .region-block{
 margin-top:12px;
@@ -198,7 +194,6 @@ color:#9fb3c8;
 <div class="panel">
 
 <h3>Articles by Region</h3>
-
 <div id="regionArticles"></div>
 
 </div>
@@ -257,9 +252,7 @@ topics.Russia++
 }
 
 if(text.includes("sanction")||text.includes("eu")) topics.Regulation++
-
 if(text.includes("technology")||text.includes("tech")) topics.Technology++
-
 if(text.includes("digital")||text.includes("crypto")||text.includes("blockchain"))
 topics["Digital Assets"]++
 
@@ -285,22 +278,14 @@ if(text.includes("russia")) russiaByDay[date]++
 let source=(a.domain||"").replace("www.","")
 
 let allowedSources=[
-
 "reuters.com","bloomberg.com","ft.com","politico.com","politico.eu",
 "economist.com","wsj.com",
-
 "nytimes.com","washingtonpost.com","cnn.com",
-
 "bbc.com","bbc.co.uk","theguardian.com",
-
 "elpais.com","lemonde.fr","spiegel.de","ansa.it",
-
 "nikkei.com","scmp.com","straitstimes.com",
-
 "aljazeera.com","arabnews.com",
-
 "tass.com","interfax.ru","kyivpost.com"
-
 ]
 
 if(allowedSources.includes(source)){
@@ -324,10 +309,7 @@ regionArticles[region].push(a)
 
 }
 
-let keywords=[
-"sanctions","frozen assets","russian assets","asset seizure",
-"litigation","digital assets","blockchain","settlement"
-]
+let keywords=["sanctions","frozen assets","russian assets","asset seizure","litigation","digital assets","blockchain","settlement"]
 
 keywords.forEach(k=>{
 if(text.includes(k)){
@@ -340,28 +322,31 @@ drivers[k]++
 
 
 const share=((russia/articles.length)*100).toFixed(1)
-
 document.getElementById("russiaShare").innerText=share+"%"
 
 
-const labels=Object.keys(mentionsByDay)
-const values=Object.values(mentionsByDay)
-const russiaValues=Object.values(russiaByDay)
+/* FIXED SORTED TIME SERIES */
+
+const dates=Object.keys(mentionsByDay).sort()
+
+const labels=dates.map(d=>d.substring(0,4)+"-"+d.substring(4,6)+"-"+d.substring(6,8))
+
+const values=dates.map(d=>mentionsByDay[d]||0)
+const russiaValues=dates.map(d=>russiaByDay[d]||0)
 
 
-let last3Total=0
-let last3Russia=0
-let prev3Total=0
-let prev3Russia=0
+/* MOMENTUM */
 
-for(let i=labels.length-1;i>=labels.length-3;i--){
+let last3Total=0,last3Russia=0,prev3Total=0,prev3Russia=0
+
+for(let i=values.length-1;i>=values.length-3;i--){
 if(values[i]){
 last3Total+=values[i]
 last3Russia+=russiaValues[i]
 }
 }
 
-for(let i=labels.length-4;i>=labels.length-6;i--){
+for(let i=values.length-4;i>=values.length-6;i--){
 if(values[i]){
 prev3Total+=values[i]
 prev3Russia+=russiaValues[i]
@@ -371,10 +356,10 @@ prev3Russia+=russiaValues[i]
 let lastShare=last3Total?(last3Russia/last3Total)*100:0
 let prevShare=prev3Total?(prev3Russia/prev3Total)*100:0
 
-let momentum=(lastShare-prevShare).toFixed(1)
+document.getElementById("momentum").innerText=(lastShare-prevShare).toFixed(1)+"%"
 
-document.getElementById("momentum").innerText=momentum+"%"
 
+/* NEWS FEED */
 
 articles.slice(0,10).forEach(a=>{
 let item=document.createElement("div")
@@ -384,9 +369,12 @@ newsDiv.appendChild(item)
 })
 
 
-const sortedDrivers=Object.entries(drivers).sort((a,b)=>b[1]-a[1]).slice(0,8)
+/* DRIVERS */
 
-sortedDrivers.forEach(d=>{
+Object.entries(drivers)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,8)
+.forEach(d=>{
 let item=document.createElement("div")
 item.className="list-item"
 item.innerText=d[0]+" ("+d[1]+")"
@@ -394,13 +382,13 @@ driversDiv.appendChild(item)
 })
 
 
-Object.keys(regionArticles).forEach(region=>{
+/* ARTICLES BY REGION */
 
+Object.keys(regionArticles).forEach(region=>{
 if(regionArticles[region].length>0){
 
 let block=document.createElement("div")
 block.className="region-block"
-
 block.innerHTML="<h4>"+region+"</h4>"
 
 regionArticles[region].slice(0,5).forEach(a=>{
@@ -413,24 +401,30 @@ block.appendChild(item)
 regionArticlesDiv.appendChild(block)
 
 }
-
 })
 
+
+/* CHART STYLE */
+
+const chartStyle={
+borderWidth:2,
+tension:0.35,
+pointRadius:2
+}
+
+
+/* CHARTS */
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
-data:{labels:labels,datasets:[{data:values}]}
+data:{labels:labels,datasets:[{data:values,...chartStyle}]}
 })
 
-const russiaShareTrend=labels.map((d,i)=>{
-let total=values[i]
-let rus=russiaValues[i]
-return total?(rus/total)*100:0
-})
+const russiaShareTrend=values.map((v,i)=>v?(russiaValues[i]/v)*100:0)
 
 new Chart(document.getElementById("russiaTrendChart"),{
 type:"line",
-data:{labels:labels,datasets:[{data:russiaShareTrend}]}
+data:{labels:labels,datasets:[{data:russiaShareTrend,...chartStyle}]}
 })
 
 new Chart(document.getElementById("topicChart"),{
