@@ -50,7 +50,9 @@ padding:20px;
 border-radius:8px;
 }
 
-canvas{max-height:220px;}
+canvas{
+max-height:220px;
+}
 
 .list-item{
 padding:6px 0;
@@ -67,6 +69,7 @@ margin-top:10px;
 }
 
 </style>
+
 </head>
 
 <body>
@@ -146,9 +149,10 @@ let russiaChart
 let sourceChart
 let regionChart
 
+
 async function loadNews(){
 
-const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20sanctions&mode=ArtList&maxrecords=100&format=json"
+const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=180&format=json"
 
 const url="https://api.allorigins.win/raw?url="+encodeURIComponent(api)
 
@@ -170,15 +174,17 @@ let sources={}
 let regions={}
 let regionArticles={}
 
+
 articles.forEach(a=>{
 
-const text=(a.title||"").toLowerCase()
+const text=(a.title || "").toLowerCase()
 
 if(text.includes("russia")) russia++
 
+
 if(a.seendate){
 
-let date=a.seendate.substring(4,8)
+let date=a.seendate.substring(0,8)
 
 if(!mentionsByDay[date]){
 mentionsByDay[date]=0
@@ -191,7 +197,8 @@ if(text.includes("russia")) russiaByDay[date]++
 
 }
 
-let source=(a.domain||"").replace("www.","")
+
+let source=(a.domain || "").replace("www.","")
 
 if(!sources[source]) sources[source]=0
 sources[source]++
@@ -199,9 +206,9 @@ sources[source]++
 
 let region="Global"
 
-if(source.includes("cnn")||source.includes("nytimes")) region="US"
-if(source.includes("bbc")||source.includes("guardian")) region="UK"
-if(source.includes("elpais")||source.includes("lemonde")) region="Europe"
+if(source.includes("cnn") || source.includes("nytimes")) region="US"
+if(source.includes("bbc") || source.includes("guardian")) region="UK"
+if(source.includes("elpais") || source.includes("lemonde")) region="Europe"
 if(source.includes("nikkei")) region="Asia"
 if(source.includes("tass")) region="Russia/CIS"
 
@@ -215,14 +222,22 @@ regionArticles[region].push(a)
 
 
 const share=articles.length?((russia/articles.length)*100).toFixed(1):0
-
 document.getElementById("russiaShare").innerText=share+"%"
 
 
-const labels=Object.keys(mentionsByDay)
-const values=Object.values(mentionsByDay)
-const rvalues=Object.values(russiaByDay)
+/* SORTED DATE SERIES */
 
+const dates=Object.keys(mentionsByDay).sort()
+
+const labels=dates.map(d =>
+d.substring(0,4)+"-"+d.substring(4,6)+"-"+d.substring(6,8)
+)
+
+const values=dates.map(d => mentionsByDay[d])
+const rvalues=dates.map(d => russiaByDay[d])
+
+
+/* CHARTS */
 
 if(mentionsChart) mentionsChart.destroy()
 
@@ -230,7 +245,13 @@ mentionsChart=new Chart(
 document.getElementById("mentionsChart"),
 {
 type:"line",
-data:{labels:labels,datasets:[{data:values,tension:0.3}]}
+data:{
+labels:labels,
+datasets:[{
+data:values,
+tension:0.3
+}]
+}
 }
 )
 
@@ -243,7 +264,13 @@ russiaChart=new Chart(
 document.getElementById("russiaTrendChart"),
 {
 type:"line",
-data:{labels:labels,datasets:[{data:rtrend,tension:0.3}]}
+data:{
+labels:labels,
+datasets:[{
+data:rtrend,
+tension:0.3
+}]
+}
 }
 )
 
@@ -280,6 +307,8 @@ datasets:[{data:Object.values(regions)}]
 )
 
 
+/* NEWS FEED */
+
 const newsDiv=document.getElementById("news")
 newsDiv.innerHTML=""
 
@@ -295,6 +324,8 @@ newsDiv.appendChild(item)
 })
 
 
+/* ARTICLES BY REGION */
+
 const regionDiv=document.getElementById("regionArticles")
 regionDiv.innerHTML=""
 
@@ -307,7 +338,7 @@ block.innerHTML="<b>"+region+"</b>"
 
 regionArticles[region].slice(0,5).forEach(a=>{
 
-let source=(a.domain||"").split(".")[0]
+let source=(a.domain || "").split(".")[0]
 
 const item=document.createElement("div")
 item.className="list-item"
@@ -325,7 +356,6 @@ regionDiv.appendChild(block)
 }catch(err){
 
 console.log(err)
-
 document.getElementById("status").innerText="API Error"
 
 }
