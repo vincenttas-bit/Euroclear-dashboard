@@ -1,209 +1,25 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Euroclear Geopolitical Intelligence Monitor</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-
-body{
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-background:#0b0f14;
-color:#e6edf3;
-margin:0;
-padding:30px;
-max-width:1500px;
-margin:auto;
-}
-
-h1{
-font-weight:600;
-margin-bottom:20px;
-color:#fff;
-}
-
-.kpi-strip{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:14px;
-margin-bottom:22px;
-}
-
-.kpi{
-background:#121821;
-padding:16px;
-border-radius:6px;
-border:1px solid #1f2a36;
-}
-
-.kpi-title{
-font-size:12px;
-color:#8b9bb0;
-}
-
-.kpi-value{
-font-size:30px;
-font-weight:600;
-margin-top:6px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
-margin-bottom:20px;
-}
-
-.panel{
-background:#121821;
-border:1px solid #1f2a36;
-border-radius:6px;
-padding:18px;
-}
-
-.panel h3{
-margin-top:0;
-font-size:14px;
-font-weight:600;
-color:#dce3ea;
-}
-
-canvas{
-max-height:230px;
-}
-
-.analytics{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
-margin-bottom:20px;
-}
-
-.list-item{
-padding:6px 0;
-border-bottom:1px solid #1d2630;
-font-size:13px;
-}
-
-a{
-color:#9cc7ff;
-text-decoration:none;
-}
-
-.region-block{
-margin-top:12px;
-}
-
-.region-block h4{
-margin-bottom:6px;
-font-size:13px;
-color:#9fb3c8;
-}
-
-</style>
-</head>
-
-<body>
-
-<h1>Euroclear Geopolitical Intelligence Monitor</h1>
-
-<div class="kpi-strip">
-
-<div class="kpi">
-<div class="kpi-title">Total Euroclear Articles</div>
-<div id="total" class="kpi-value">Loading</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-title">Russia Narrative Share</div>
-<div id="russiaShare" class="kpi-value">Loading</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-title">Narrative Momentum</div>
-<div id="momentum" class="kpi-value">Loading</div>
-</div>
-
-</div>
-
-
-
-<div class="grid">
-
-<div class="panel">
-<h3>Euroclear Mentions Trend</h3>
-<canvas id="mentionsChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Russia Narrative Trend</h3>
-<canvas id="russiaTrendChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Topic Distribution</h3>
-<canvas id="topicChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Sentiment Analysis</h3>
-<canvas id="sentimentChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Top Media Sources</h3>
-<canvas id="sourceChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Media Coverage by Region</h3>
-<canvas id="regionChart"></canvas>
-</div>
-
-</div>
-
-
-
-<div class="analytics">
-
-<div class="panel">
-<h3>Narrative Drivers</h3>
-<div id="drivers"></div>
-</div>
-
-<div class="panel">
-<h3>Latest Euroclear Coverage</h3>
-<div id="news"></div>
-</div>
-
-</div>
-
-
-
-<div class="panel">
-
-<h3>Articles by Region</h3>
-
-<div id="regionArticles"></div>
-
-</div>
-
-
-
 <script>
 
 async function loadNews(){
 
+try{
+
 const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=250&format=json"
 
 const res=await fetch(url)
+
+if(!res.ok){
+throw new Error("API request failed")
+}
+
 const data=await res.json()
 
 const articles=data.articles || []
 
+/* KPI */
+
 document.getElementById("total").innerText=articles.length
+
 
 let russia=0
 
@@ -236,21 +52,36 @@ regionArticlesDiv.innerHTML=""
 
 articles.forEach(a=>{
 
-const text=(a.title||"").toLowerCase()
+const text=(a.title || "").toLowerCase()
 
-if(text.includes("russia")||text.includes("kremlin")){
+/* Russia detection */
+
+if(text.includes("russia") || text.includes("kremlin")){
 russia++
 topics.Russia++
 }
 
-if(text.includes("sanction")||text.includes("eu")) topics.Regulation++
-if(text.includes("technology")||text.includes("tech")) topics.Technology++
-if(text.includes("digital")||text.includes("crypto")||text.includes("blockchain"))
+/* Topic detection */
+
+if(text.includes("sanction") || text.includes("eu"))
+topics.Regulation++
+
+if(text.includes("technology") || text.includes("tech"))
+topics.Technology++
+
+if(text.includes("digital") || text.includes("crypto") || text.includes("blockchain"))
 topics["Digital Assets"]++
 
-if(text.includes("profit")||text.includes("growth")) sentiment.Positive++
-else if(text.includes("sanction")||text.includes("freeze")||text.includes("lawsuit")) sentiment.Negative++
-else sentiment.Neutral++
+/* Sentiment */
+
+if(text.includes("profit") || text.includes("growth"))
+sentiment.Positive++
+else if(text.includes("sanction") || text.includes("freeze") || text.includes("lawsuit"))
+sentiment.Negative++
+else
+sentiment.Neutral++
+
+/* Time series */
 
 if(a.seendate){
 
@@ -263,13 +94,17 @@ russiaByDay[date]=0
 
 mentionsByDay[date]++
 
-if(text.includes("russia")) russiaByDay[date]++
+if(text.includes("russia"))
+russiaByDay[date]++
 
 }
 
-let source=(a.domain||"").replace("www.","")
+/* Source */
+
+let source=(a.domain || "").replace("www.","")
 
 let allowedSources=[
+
 "reuters.com","bloomberg.com","ft.com","politico.com","politico.eu",
 "economist.com","wsj.com",
 "nytimes.com","washingtonpost.com","cnn.com",
@@ -278,6 +113,7 @@ let allowedSources=[
 "nikkei.com","scmp.com","straitstimes.com",
 "aljazeera.com","arabnews.com",
 "tass.com","interfax.ru","kyivpost.com"
+
 ]
 
 if(allowedSources.includes(source)){
@@ -301,6 +137,8 @@ regionArticles[region].push(a)
 
 }
 
+/* Drivers */
+
 let keywords=["sanctions","frozen assets","russian assets","asset seizure","litigation","digital assets","blockchain","settlement"]
 
 keywords.forEach(k=>{
@@ -313,8 +151,13 @@ drivers[k]++
 })
 
 
-const share=((russia/articles.length)*100).toFixed(1)
+/* Russia share */
+
+const share=articles.length ? ((russia/articles.length)*100).toFixed(1) : 0
 document.getElementById("russiaShare").innerText=share+"%"
+
+
+/* Time series sorting */
 
 const dates=Object.keys(mentionsByDay).sort()
 
@@ -324,20 +167,18 @@ const values=dates.map(d=>mentionsByDay[d]||0)
 const russiaValues=dates.map(d=>russiaByDay[d]||0)
 
 
+/* Momentum */
+
 let last3Total=0,last3Russia=0,prev3Total=0,prev3Russia=0
 
-for(let i=values.length-1;i>=values.length-3;i--){
-if(values[i]){
+for(let i=values.length-1;i>=Math.max(values.length-3,0);i--){
 last3Total+=values[i]
 last3Russia+=russiaValues[i]
 }
-}
 
-for(let i=values.length-4;i>=values.length-6;i--){
-if(values[i]){
-prev3Total+=values[i]
-prev3Russia+=russiaValues[i]
-}
+for(let i=values.length-4;i>=Math.max(values.length-6,0);i--){
+prev3Total+=values[i]||0
+prev3Russia+=russiaValues[i]||0
 }
 
 let lastShare=last3Total?(last3Russia/last3Total)*100:0
@@ -346,6 +187,8 @@ let prevShare=prev3Total?(prev3Russia/prev3Total)*100:0
 document.getElementById("momentum").innerText=(lastShare-prevShare).toFixed(1)+"%"
 
 
+/* News feed */
+
 articles.slice(0,10).forEach(a=>{
 let item=document.createElement("div")
 item.className="list-item"
@@ -353,6 +196,8 @@ item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 newsDiv.appendChild(item)
 })
 
+
+/* Drivers */
 
 Object.entries(drivers)
 .sort((a,b)=>b[1]-a[1])
@@ -365,7 +210,7 @@ driversDiv.appendChild(item)
 })
 
 
-/* ARTICLES BY REGION WITH SOURCE NAME */
+/* Articles by region */
 
 Object.keys(regionArticles).forEach(region=>{
 
@@ -395,6 +240,8 @@ regionArticlesDiv.appendChild(block)
 
 })
 
+
+/* Charts */
 
 const chartStyle={borderWidth:2,tension:0.35,pointRadius:2}
 
@@ -432,6 +279,16 @@ type:"pie",
 data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
 })
 
+}catch(error){
+
+console.error(error)
+
+document.getElementById("total").innerText="Error"
+document.getElementById("russiaShare").innerText="Error"
+document.getElementById("momentum").innerText="Error"
+
+}
+
 }
 
 loadNews()
@@ -439,6 +296,3 @@ loadNews()
 setInterval(loadNews,3600000)
 
 </script>
-
-</body>
-</html>
