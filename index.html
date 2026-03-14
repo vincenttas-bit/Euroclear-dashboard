@@ -51,6 +51,10 @@ padding:6px 0;
 border-bottom:1px solid #222;
 }
 
+.regionSection{
+margin-top:10px;
+}
+
 </style>
 
 </head>
@@ -127,6 +131,12 @@ border-bottom:1px solid #222;
 </div>
 
 
+<div class="card">
+<h3>Articles by Region</h3>
+<div id="regionArticles"></div>
+</div>
+
+
 <script>
 
 async function loadNews(){
@@ -162,39 +172,43 @@ let sources={}
 let regions={}
 let drivers={}
 
+let regionArticles={
+US:[],
+UK:[],
+Europe:[],
+Asia:[],
+"Middle East":[],
+"Russia/CIS":[]
+}
 
 const newsDiv=document.getElementById("news")
 const driversDiv=document.getElementById("drivers")
+const regionArticlesDiv=document.getElementById("regionArticles")
 
 newsDiv.innerHTML=""
 driversDiv.innerHTML=""
+regionArticlesDiv.innerHTML=""
 
 articles.forEach(a=>{
 
 const text=(a.title || "").toLowerCase()
-
-/* Russia detection */
 
 if(text.includes("russia") || text.includes("kremlin")){
 russia++
 topics.Russia++
 }
 
-/* Topic detection */
-
 if(text.includes("sanction") || text.includes("eu") || text.includes("regulation")){
 topics.Regulation++
 }
 
-if(text.includes("technology") || text.includes("tech") || text.includes("platform")){
+if(text.includes("technology") || text.includes("tech")){
 topics.Technology++
 }
 
 if(text.includes("digital") || text.includes("crypto") || text.includes("blockchain")){
 topics["Digital Assets"]++
 }
-
-/* Sentiment */
 
 if(text.includes("profit") || text.includes("growth")){
 sentiment.Positive++
@@ -205,8 +219,6 @@ sentiment.Negative++
 else{
 sentiment.Neutral++
 }
-
-/* Time series */
 
 if(a.seendate){
 
@@ -224,8 +236,6 @@ russiaByDay[date]++
 }
 
 }
-
-/* Source filtering */
 
 let source=(a.domain || "").replace("www.","")
 
@@ -273,21 +283,13 @@ sources[source]=0
 
 sources[source]++
 
-
-/* REGION MAPPING */
-
 let region="Other"
 
 if(["nytimes.com","washingtonpost.com","cnn.com"].includes(source)) region="US"
-
 if(["bbc.com","bbc.co.uk","theguardian.com"].includes(source)) region="UK"
-
 if(["elpais.com","lemonde.fr","spiegel.de","ansa.it","politico.eu"].includes(source)) region="Europe"
-
 if(["nikkei.com","scmp.com","straitstimes.com"].includes(source)) region="Asia"
-
 if(["aljazeera.com","arabnews.com"].includes(source)) region="Middle East"
-
 if(["tass.com","interfax.ru","kyivpost.com"].includes(source)) region="Russia/CIS"
 
 if(!regions[region]){
@@ -296,9 +298,9 @@ regions[region]=0
 
 regions[region]++
 
-}
+regionArticles[region].push(a)
 
-/* Narrative drivers */
+}
 
 let keywords=[
 "sanctions",
@@ -308,8 +310,7 @@ let keywords=[
 "litigation",
 "digital assets",
 "blockchain",
-"settlement",
-"clearing system"
+"settlement"
 ]
 
 keywords.forEach(k=>{
@@ -324,12 +325,8 @@ drivers[k]++
 })
 
 
-/* Russia share */
-
 const share=((russia/articles.length)*100).toFixed(1)
 document.getElementById("russiaShare").innerText=share+"%"
-
-/* Momentum */
 
 const labels=Object.keys(mentionsByDay)
 const values=Object.values(mentionsByDay)
@@ -339,10 +336,7 @@ const latestShare=(russiaValues[russiaValues.length-1]/values[values.length-1])*
 const previousShare=(russiaValues[russiaValues.length-7]/values[values.length-7])*100 || 0
 
 const momentum=(latestShare-previousShare).toFixed(1)
-
 document.getElementById("momentum").innerText=momentum+"%"
-
-/* News */
 
 articles.slice(0,10).forEach(a=>{
 const item=document.createElement("div")
@@ -350,7 +344,26 @@ item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 newsDiv.appendChild(item)
 })
 
-/* Drivers */
+Object.keys(regionArticles).forEach(region=>{
+
+if(regionArticles[region].length>0){
+
+let section=document.createElement("div")
+section.className="regionSection"
+
+section.innerHTML="<h4>"+region+"</h4>"
+
+regionArticles[region].slice(0,5).forEach(a=>{
+let item=document.createElement("div")
+item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+section.appendChild(item)
+})
+
+regionArticlesDiv.appendChild(section)
+
+}
+
+})
 
 const sortedDrivers=Object.entries(drivers)
 .sort((a,b)=>b[1]-a[1])
@@ -362,8 +375,6 @@ item.className="driver"
 item.innerText=d[0]+" ("+d[1]+")"
 driversDiv.appendChild(item)
 })
-
-/* Charts */
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
@@ -397,18 +408,12 @@ const sortedSources=Object.entries(sources)
 
 new Chart(document.getElementById("sourceChart"),{
 type:"bar",
-data:{
-labels:sortedSources.map(s=>s[0]),
-datasets:[{label:"Mentions",data:sortedSources.map(s=>s[1])}]
-}
+data:{labels:sortedSources.map(s=>s[0]),datasets:[{label:"Mentions",data:sortedSources.map(s=>s[1])}]}
 })
 
 new Chart(document.getElementById("regionChart"),{
 type:"pie",
-data:{
-labels:Object.keys(regions),
-datasets:[{data:Object.values(regions)}]
-}
+data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
 })
 
 }
