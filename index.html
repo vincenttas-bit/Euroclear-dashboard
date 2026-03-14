@@ -23,6 +23,8 @@ margin-bottom:26px;
 color:#ffffff;
 }
 
+/* KPI STRIP /
+
 .kpi-strip{
 display:grid;
 grid-template-columns:repeat(3,1fr);
@@ -48,12 +50,30 @@ font-weight:600;
 margin-top:6px;
 }
 
+/ GRID /
+
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:20px;
 margin-bottom:28px;
 }
+
+.analytics{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:28px;
+}
+
+.intelligence{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-bottom:28px;
+}
+
+/ PANELS /
 
 .panel{
 background:#11161c;
@@ -74,6 +94,8 @@ canvas{
 max-height:210px;
 }
 
+/ LISTS /
+
 .list-item{
 padding:7px 0;
 border-bottom:1px solid #1d2630;
@@ -85,12 +107,47 @@ color:#8ab4ff;
 text-decoration:none;
 }
 
+/ MATRIX /
+
+.matrix{
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:12px;
+margin-top:10px;
+}
+
+.matrix div{
+background:#0f141b;
+border:1px solid #1e2733;
+padding:12px;
+border-radius:4px;
+text-align:center;
+font-size:12px;
+}
+
+/ HEAT MAP /
+
+.heatmap{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:12px;
+}
+
+.heatcell{
+padding:16px;
+border-radius:6px;
+text-align:center;
+font-size:13px;
+border:1px solid #1f2a36;
+}
+
 </style>
 </head>
 
 <body>
 
 <h1>Euroclear Geopolitical Intelligence Monitor</h1>
+
 
 <div class="kpi-strip">
 
@@ -112,6 +169,7 @@ text-decoration:none;
 </div>
 
 
+
 <div class="grid">
 
 <div class="panel">
@@ -120,16 +178,69 @@ text-decoration:none;
 </div>
 
 <div class="panel">
+<h3>Russia Narrative Trend</h3>
+<canvas id="russiaTrendChart"></canvas>
+</div>
+
+<div class="panel">
+<h3>Topic Distribution</h3>
+<canvas id="topicChart"></canvas>
+</div>
+
+<div class="panel">
+<h3>Sentiment Analysis</h3>
+<canvas id="sentimentChart"></canvas>
+</div>
+
+<div class="panel">
 <h3>Top Media Sources</h3>
 <canvas id="sourceChart"></canvas>
 </div>
 
+<div class="panel">
+<h3>Media Coverage by Region</h3>
+<canvas id="regionChart"></canvas>
 </div>
 
+</div>
+
+
+
+<div class="analytics">
+
+<div class="panel">
+<h3>Narrative Drivers</h3>
+<div id="drivers"></div>
+</div>
 
 <div class="panel">
 <h3>Latest Euroclear Coverage</h3>
 <div id="news"></div>
+</div>
+
+</div>
+
+
+
+<div class="intelligence">
+
+<div class="panel">
+<h3>Narrative Matrix</h3>
+<div class="matrix" id="matrix"></div>
+</div>
+
+<div class="panel">
+<h3>Global Narrative Heat Map</h3>
+<div class="heatmap" id="heatmap"></div>
+</div>
+
+</div>
+
+
+
+<div class="panel">
+<h3>Articles by Region</h3>
+<div id="regionArticles"></div>
 </div>
 
 
@@ -137,13 +248,12 @@ text-decoration:none;
 <script>
 
 Chart.defaults.animation=false
-
 let charts=[]
 
 const CACHE_KEY="euroclear_cache"
-const CACHE_TIME=10601000
+const CACHE_TIME=1060*1000
 
-async function getNewsData(){
+async function fetchGDELT(){
 
 const cached=localStorage.getItem(CACHE_KEY)
 
@@ -152,17 +262,14 @@ if(cached){
 const parsed=JSON.parse(cached)
 
 if(Date.now()-parsed.time<CACHE_TIME){
-
 return parsed.data
-
 }
 
 }
 
-const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=200&format=json"
+const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=250&format=json"
 
 const res=await fetch(api)
-
 const data=await res.json()
 
 localStorage.setItem(CACHE_KEY,JSON.stringify({
@@ -175,89 +282,92 @@ return data
 }
 
 
+
 async function loadNews(){
 
 try{
 
-const data=await getNewsData()
+const data=await fetchGDELT()
 
-const articles=data.articles||[]
+let articles=data.articles||[]
 
 document.getElementById("total").innerText=articles.length
 
 let russia=0
 let sources={}
-let mentionsByDay={}
+let regions={US:0,UK:0,Europe:0,Asia:0}
+let matrix={Russia:0,Sanctions:0,"Frozen Assets":0,Litigation:0,Digital:0}
 
-const newsDiv=document.getElementById("news")
+let news=document.getElementById("news")
+let drivers=document.getElementById("drivers")
+let regionArticles=document.getElementById("regionArticles")
 
-newsDiv.innerHTML=""
+news.innerHTML=""
+drivers.innerHTML=""
+regionArticles.innerHTML=""
 
 articles.slice(0,10).forEach(a=>{
 
-const title=(a.title||"").toLowerCase()
+let text=(a.title||"").toLowerCase()
 
-if(title.includes("russia")) russia++
+if(text.includes("russia")){russia++;matrix.Russia++}
+if(text.includes("sanction")) matrix.Sanctions++
+if(text.includes("freeze")) matrix["Frozen Assets"]++
+if(text.includes("litigation")) matrix.Litigation++
+if(text.includes("digital")) matrix.Digital++
 
-const source=(a.domain||"").replace("www.","")
+let source=(a.domain||"").replace("www.","")
 
 if(!sources[source]) sources[source]=0
 sources[source]++
 
-if(a.seendate){
-
-const d=a.seendate.substring(0,8)
-
-if(!mentionsByDay[d]) mentionsByDay[d]=0
-
-mentionsByDay[d]++
-
-}
-
-const item=document.createElement("div")
+let item=document.createElement("div")
 item.className="list-item"
-
 item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-
-newsDiv.appendChild(item)
+news.appendChild(item)
 
 })
 
 document.getElementById("russiaShare").innerText=((russia/articles.length)*100).toFixed(1)+"%"
-
 document.getElementById("sourceCount").innerText=Object.keys(sources).length
 
-const dates=Object.keys(mentionsByDay).sort()
+Object.entries(matrix).forEach(d=>{
+let div=document.createElement("div")
+div.className="list-item"
+div.innerText=d[0]+" ("+d[1]+")"
+drivers.appendChild(div)
+})
 
-const values=dates.map(d=>mentionsByDay[d])
+const matrixDiv=document.getElementById("matrix")
+matrixDiv.innerHTML=""
 
-charts.forEach(c=>c.destroy())
-charts=[]
+Object.entries(matrix).forEach(m=>{
+let d=document.createElement("div")
+d.innerHTML="<b>"+m[0]+"</b><br>"+m[1]
+matrixDiv.appendChild(d)
+})
 
-charts.push(new Chart(document.getElementById("mentionsChart"),{
-type:"line",
-data:{labels:dates,datasets:[{data:values,borderColor:"#8ab4ff"}]}
-}))
+const heat=document.getElementById("heatmap")
+heat.innerHTML=""
 
-const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
-
-charts.push(new Chart(document.getElementById("sourceChart"),{
-type:"bar",
-data:{labels:sortedSources.map(s=>s[0]),
-datasets:[{data:sortedSources.map(s=>s[1]),backgroundColor:"#8ab4ff"}]}
-}))
+Object.entries(regions).forEach(r=>{
+let cell=document.createElement("div")
+cell.className="heatcell"
+cell.innerHTML="<b>"+r[0]+"</b><br>"+r[1]
+heat.appendChild(cell)
+})
 
 }catch(e){
 
 document.getElementById("total").innerText="API Error"
-document.getElementById("russiaShare").innerText="-"
-document.getElementById("sourceCount").innerText="-"
 
 }
 
 }
 
 loadNews()
+
+setInterval(loadNews,3600000)
 
 </script>
 
