@@ -141,7 +141,7 @@ margin-top:10px;
 
 async function loadNews(){
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=120&format=json"
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=250&format=json"
 
 const res=await fetch(url)
 const data=await res.json()
@@ -149,7 +149,6 @@ const data=await res.json()
 const articles=data.articles || []
 
 document.getElementById("total").innerText=articles.length
-
 
 let russia=0
 
@@ -324,18 +323,39 @@ drivers[k]++
 
 })
 
-
 const share=((russia/articles.length)*100).toFixed(1)
 document.getElementById("russiaShare").innerText=share+"%"
+
+/* IMPROVED MOMENTUM */
 
 const labels=Object.keys(mentionsByDay)
 const values=Object.values(mentionsByDay)
 const russiaValues=Object.values(russiaByDay)
 
-const latestShare=(russiaValues[russiaValues.length-1]/values[values.length-1])*100 || 0
-const previousShare=(russiaValues[russiaValues.length-7]/values[values.length-7])*100 || 0
+let last3Total=0
+let last3Russia=0
+let prev3Total=0
+let prev3Russia=0
 
-const momentum=(latestShare-previousShare).toFixed(1)
+for(let i=labels.length-1;i>=labels.length-3;i--){
+if(values[i]){
+last3Total+=values[i]
+last3Russia+=russiaValues[i]
+}
+}
+
+for(let i=labels.length-4;i>=labels.length-6;i--){
+if(values[i]){
+prev3Total+=values[i]
+prev3Russia+=russiaValues[i]
+}
+}
+
+let lastShare=last3Total?(last3Russia/last3Total)*100:0
+let prevShare=prev3Total?(prev3Russia/prev3Total)*100:0
+
+let momentum=(lastShare-prevShare).toFixed(1)
+
 document.getElementById("momentum").innerText=momentum+"%"
 
 articles.slice(0,10).forEach(a=>{
@@ -384,7 +404,7 @@ data:{labels:labels,datasets:[{label:"Euroclear mentions",data:values,tension:0.
 const russiaShareTrend=labels.map((d,i)=>{
 let total=values[i]
 let rus=russiaValues[i]
-return total? (rus/total)*100 : 0
+return total?(rus/total)*100:0
 })
 
 new Chart(document.getElementById("russiaTrendChart"),{
