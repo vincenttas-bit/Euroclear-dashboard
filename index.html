@@ -2,12 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Euroclear Narrative Monitor</title>
-
+<title>Euroclear Narrative Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body{
 font-family:Arial;
 background:#0b0f14;
@@ -17,9 +15,7 @@ max-width:1200px;
 margin:auto;
 }
 
-h1{
-margin-bottom:25px;
-}
+h1{margin-bottom:20px;}
 
 .metrics{
 display:grid;
@@ -37,7 +33,6 @@ border-radius:8px;
 .metric{
 font-size:28px;
 font-weight:bold;
-margin-top:5px;
 }
 
 .grid{
@@ -53,24 +48,14 @@ padding:20px;
 border-radius:8px;
 }
 
-canvas{
-max-height:240px;
-}
-
-a{
-color:#9ecbff;
-text-decoration:none;
-}
-
-.region-block{
-margin-top:10px;
-}
+canvas{max-height:220px;}
 
 .list-item{
 padding:5px 0;
 border-bottom:1px solid #222;
 }
 
+a{color:#9ecbff;text-decoration:none;}
 </style>
 
 </head>
@@ -79,11 +64,10 @@ border-bottom:1px solid #222;
 
 <h1>Euroclear Narrative Intelligence Dashboard</h1>
 
-
 <div class="metrics">
 
 <div class="metric-card">
-<div>Total Euroclear Articles</div>
+<div>Total Articles</div>
 <div id="total" class="metric">Loading...</div>
 </div>
 
@@ -93,8 +77,8 @@ border-bottom:1px solid #222;
 </div>
 
 <div class="metric-card">
-<div>Narrative Momentum</div>
-<div id="momentum" class="metric">0%</div>
+<div>Status</div>
+<div id="status" class="metric">Loading</div>
 </div>
 
 </div>
@@ -113,32 +97,13 @@ border-bottom:1px solid #222;
 <canvas id="russiaTrendChart"></canvas>
 </div>
 
-<div class="card">
-<h3>Top Media Sources</h3>
-<canvas id="sourceChart"></canvas>
-</div>
-
-<div class="card">
-<h3>Media by Region</h3>
-<canvas id="regionChart"></canvas>
-</div>
-
 </div>
 
 
 
-<div class="grid">
-
 <div class="card">
-<h3>Latest Euroclear News</h3>
+<h3>Latest Articles</h3>
 <div id="news"></div>
-</div>
-
-<div class="card">
-<h3>Articles by Region</h3>
-<div id="regionArticles"></div>
-</div>
-
 </div>
 
 
@@ -147,22 +112,23 @@ border-bottom:1px solid #222;
 
 async function loadNews(){
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=120&format=json"
+const proxy="https://api.allorigins.win/raw?url="
+const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
 
-const res=await fetch(url)
+try{
+
+const res=await fetch(proxy+encodeURIComponent(api))
 const data=await res.json()
 
 const articles=data.articles || []
 
+document.getElementById("status").innerText="Live"
 document.getElementById("total").innerText=articles.length
 
-
 let russia=0
+
 let mentionsByDay={}
 let russiaByDay={}
-let sources={}
-let regions={}
-let regionArticles={}
 
 articles.forEach(a=>{
 
@@ -170,10 +136,9 @@ const text=(a.title || "").toLowerCase()
 
 if(text.includes("russia")) russia++
 
-
 if(a.seendate){
 
-let date=a.seendate.substring(0,8)
+let date=a.seendate.substring(4,8)
 
 if(!mentionsByDay[date]){
 mentionsByDay[date]=0
@@ -186,91 +151,28 @@ if(text.includes("russia")) russiaByDay[date]++
 
 }
 
-
-let source=(a.domain || "").replace("www.","")
-
-if(!sources[source]) sources[source]=0
-sources[source]++
-
-
-let region="Global"
-
-if(source.includes("cnn") || source.includes("nytimes")) region="US"
-if(source.includes("bbc") || source.includes("guardian")) region="UK"
-if(source.includes("elpais") || source.includes("lemonde")) region="Europe"
-if(source.includes("nikkei")) region="Asia"
-if(source.includes("tass")) region="Russia/CIS"
-
-if(!regions[region]) regions[region]=0
-regions[region]++
-
-if(!regionArticles[region]) regionArticles[region]=[]
-regionArticles[region].push(a)
-
 })
 
-
 const share=((russia/articles.length)*100).toFixed(1)
+
 document.getElementById("russiaShare").innerText=share+"%"
 
 
-const dates=Object.keys(mentionsByDay).sort()
-
-const labels=dates.map(d=>d.substring(4,6)+"-"+d.substring(6,8))
-
-const values=dates.map(d=>mentionsByDay[d])
-const russiaValues=dates.map(d=>russiaByDay[d])
+const labels=Object.keys(mentionsByDay)
+const values=Object.values(mentionsByDay)
+const rvalues=Object.values(russiaByDay)
 
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
-data:{
-labels:labels,
-datasets:[{
-data:values,
-tension:0.3
-}]
-}
+data:{labels:labels,datasets:[{data:values,tension:0.3}]}
 })
 
-
-const rTrend=values.map((v,i)=>v?(russiaValues[i]/v)*100:0)
+const rtrend=values.map((v,i)=>v?(rvalues[i]/v)*100:0)
 
 new Chart(document.getElementById("russiaTrendChart"),{
 type:"line",
-data:{
-labels:labels,
-datasets:[{
-data:rTrend,
-tension:0.3
-}]
-}
-})
-
-
-const topSources=Object.entries(sources)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,6)
-
-new Chart(document.getElementById("sourceChart"),{
-type:"bar",
-data:{
-labels:topSources.map(s=>s[0]),
-datasets:[{
-data:topSources.map(s=>s[1])
-}]
-}
-})
-
-
-new Chart(document.getElementById("regionChart"),{
-type:"pie",
-data:{
-labels:Object.keys(regions),
-datasets:[{
-data:Object.values(regions)
-}]
-}
+data:{labels:labels,datasets:[{data:rtrend,tension:0.3}]}
 })
 
 
@@ -288,34 +190,13 @@ newsDiv.appendChild(item)
 
 })
 
+}catch(err){
 
-const regionDiv=document.getElementById("regionArticles")
+document.getElementById("status").innerText="API Error"
 
-Object.keys(regionArticles).forEach(region=>{
+console.log(err)
 
-const block=document.createElement("div")
-
-block.className="region-block"
-
-block.innerHTML="<b>"+region+"</b>"
-
-regionArticles[region].slice(0,5).forEach(a=>{
-
-let source=(a.domain || "").split(".")[0]
-
-const item=document.createElement("div")
-
-item.className="list-item"
-
-item.innerHTML="<b>"+source+"</b> — <a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-
-block.appendChild(item)
-
-})
-
-regionDiv.appendChild(block)
-
-})
+}
 
 }
 
