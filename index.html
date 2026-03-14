@@ -28,7 +28,7 @@ color:#fff;
 
 .kpi-strip{
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(3,1fr);
 gap:14px;
 margin-bottom:22px;
 }
@@ -51,7 +51,7 @@ font-weight:600;
 margin-top:6px;
 }
 
-/ GRID /
+/ GRID */
 
 .grid{
 display:grid;
@@ -141,11 +141,6 @@ font-size:12px;
 </div>
 
 <div class="kpi">
-<div class="kpi-title">Narrative Momentum</div>
-<div id="momentum" class="kpi-value">Loading</div>
-</div>
-
-<div class="kpi">
 <div class="kpi-title">Unique Sources</div>
 <div id="sourceCount" class="kpi-value">Loading</div>
 </div>
@@ -232,8 +227,6 @@ const data=await res.json()
 
 let articles=data.articles || []
 
-/ REMOVE DUPLICATES /
-
 const seen=new Set()
 articles=articles.filter(a=>{
 if(seen.has(a.title)) return false
@@ -251,7 +244,6 @@ let mentionsByDay={}
 let russiaByDay={}
 let sources={}
 let regions={}
-let drivers={}
 let matrix={Russia:0,Sanctions:0,"Frozen Assets":0,Litigation:0,Digital:0}
 
 let regionArticles={US:[],UK:[],Europe:[],Asia:[]}
@@ -261,13 +253,9 @@ articles.forEach(a=>{
 const text=(a.title||"").toLowerCase()
 
 if(text.includes("russia")){russia++;topics.Russia++;matrix.Russia++}
-
 if(text.includes("sanction")){topics.Regulation++;matrix.Sanctions++}
-
 if(text.includes("freeze")||text.includes("frozen")) matrix["Frozen Assets"]++
-
 if(text.includes("lawsuit")||text.includes("litigation")) matrix.Litigation++
-
 if(text.includes("digital")||text.includes("crypto")){topics["Digital Assets"]++;matrix.Digital++}
 
 if(text.includes("profit")) sentiment.Positive++
@@ -318,21 +306,12 @@ regionArticles[region].push(a)
 
 document.getElementById("sourceCount").innerText=Object.keys(sources).length
 
-const share=((russia/articles.length)100).toFixed(1)
+const share=((russia/articles.length)*100).toFixed(1)
 document.getElementById("russiaShare").innerText=share+"%"
-
-/ MOMENTUM /
 
 const dates=Object.keys(mentionsByDay).sort()
 const values=dates.map(d=>mentionsByDay[d])
 const rvalues=dates.map(d=>russiaByDay[d])
-
-let last=values.slice(-3).reduce((a,b)=>a+b,0)
-let prev=values.slice(-6,-3).reduce((a,b)=>a+b,0)
-
-document.getElementById("momentum").innerText=((last-prev)/prev100).toFixed(1)+"%"
-
-/ DESTROY OLD CHARTS /
 
 charts.forEach(c=>c.destroy())
 charts=[]
@@ -369,45 +348,9 @@ type:"pie",
 data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
 }))
 
-/ NEWS /
-
-const news=document.getElementById("news")
-news.innerHTML=""
-
-articles.slice(0,10).forEach(a=>{
-let d=document.createElement("div")
-d.className="list-item"
-d.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-news.appendChild(d)
-})
-
-/ DRIVERS /
-
-const driversDiv=document.getElementById("drivers")
-driversDiv.innerHTML=""
-
-Object.entries(matrix).forEach(m=>{
-let d=document.createElement("div")
-d.className="list-item"
-d.innerText=m[0]+" ("+m[1]+")"
-driversDiv.appendChild(d)
-})
-
-/ MATRIX */
-
-const matrixDiv=document.getElementById("matrix")
-matrixDiv.innerHTML=""
-
-Object.entries(matrix).forEach(m=>{
-let d=document.createElement("div")
-d.innerHTML="<b>"+m[0]+"</b><br>"+m[1]
-matrixDiv.appendChild(d)
-})
-
 }
 
 loadNews()
-
 setInterval(loadNews,3600000)
 
 </script>
