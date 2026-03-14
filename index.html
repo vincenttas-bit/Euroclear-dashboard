@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Euroclear Narrative Monitor</title>
+<title>Euroclear Narrative Intelligence Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,6 +19,12 @@ h1{
 margin-bottom:30px;
 }
 
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+grid-gap:20px;
+}
+
 .card{
 background:#121821;
 padding:20px;
@@ -29,12 +35,6 @@ margin-bottom:20px;
 .metric{
 font-size:40px;
 font-weight:bold;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-grid-gap:20px;
 }
 
 a{
@@ -52,7 +52,8 @@ margin-top:10px;
 
 <body>
 
-<h1>Euroclear Global Narrative Monitor</h1>
+<h1>Euroclear Narrative Intelligence Dashboard</h1>
+
 
 <div class="grid">
 
@@ -69,6 +70,7 @@ margin-top:10px;
 </div>
 
 
+
 <div class="card">
 <h3>Euroclear Mentions Trend</h3>
 <canvas id="mentionsChart"></canvas>
@@ -76,8 +78,20 @@ margin-top:10px;
 
 
 <div class="card">
+<h3>Russia Narrative Trend</h3>
+<canvas id="russiaTrendChart"></canvas>
+</div>
+
+
+<div class="card">
 <h3>Topic Distribution</h3>
 <canvas id="topicChart"></canvas>
+</div>
+
+
+<div class="card">
+<h3>Top Media Sources</h3>
+<canvas id="sourceChart"></canvas>
 </div>
 
 
@@ -92,7 +106,7 @@ margin-top:10px;
 
 async function loadNews(){
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
 
 const res=await fetch(url)
 const data=await res.json()
@@ -100,6 +114,7 @@ const data=await res.json()
 const articles=data.articles || []
 
 document.getElementById("total").innerText=articles.length
+
 
 
 let russia=0
@@ -113,6 +128,9 @@ Technology:0,
 
 
 let mentionsByDay={}
+let russiaByDay={}
+let sources={}
+
 
 
 const newsDiv=document.getElementById("news")
@@ -125,7 +143,7 @@ articles.forEach(a=>{
 const text=(a.title || "").toLowerCase()
 
 
-if(text.includes("russia")){
+if(text.includes("russia") || text.includes("kremlin")){
 
 russia++
 topics.Russia++
@@ -133,21 +151,21 @@ topics.Russia++
 }
 
 
-if(text.includes("sanction") || text.includes("eu")){
+if(text.includes("sanction") || text.includes("eu") || text.includes("regulation")){
 
 topics.Regulation++
 
 }
 
 
-if(text.includes("technology") || text.includes("tech")){
+if(text.includes("technology") || text.includes("tech") || text.includes("platform")){
 
 topics.Technology++
 
 }
 
 
-if(text.includes("digital") || text.includes("crypto")){
+if(text.includes("digital") || text.includes("crypto") || text.includes("token")){
 
 topics["Digital Assets"]++
 
@@ -162,21 +180,42 @@ let date=a.seendate.substring(0,8)
 if(!mentionsByDay[date]){
 
 mentionsByDay[date]=0
+russiaByDay[date]=0
 
 }
 
 mentionsByDay[date]++
 
+if(text.includes("russia")){
+
+russiaByDay[date]++
+
+}
+
 }
 
 
 
+if(a.source){
+
+if(!sources[a.source]){
+
+sources[a.source]=0
+
+}
+
+sources[a.source]++
+
+}
+
 })
+
 
 
 const share=((russia/articles.length)*100).toFixed(1)
 
 document.getElementById("russiaShare").innerText=share+"%"
+
 
 
 articles.slice(0,10).forEach(a=>{
@@ -193,6 +232,8 @@ newsDiv.appendChild(item)
 
 const labels=Object.keys(mentionsByDay)
 const values=Object.values(mentionsByDay)
+const russiaValues=Object.values(russiaByDay)
+
 
 
 new Chart(document.getElementById("mentionsChart"),{
@@ -200,19 +241,40 @@ new Chart(document.getElementById("mentionsChart"),{
 type:"line",
 
 data:{
-
 labels:labels,
-
 datasets:[{
-
 label:"Euroclear mentions",
-
 data:values,
-
 tension:0.3
-
 }]
+}
 
+})
+
+
+
+const russiaShareTrend=labels.map((d,i)=>{
+
+let total=values[i]
+let rus=russiaValues[i]
+
+return total? (rus/total)*100 : 0
+
+})
+
+
+
+new Chart(document.getElementById("russiaTrendChart"),{
+
+type:"line",
+
+data:{
+labels:labels,
+datasets:[{
+label:"Russia narrative %",
+data:russiaShareTrend,
+tension:0.3
+}]
 }
 
 })
@@ -224,18 +286,37 @@ new Chart(document.getElementById("topicChart"),{
 type:"pie",
 
 data:{
-
 labels:Object.keys(topics),
-
 datasets:[{
-
 data:Object.values(topics)
-
 }]
-
 }
 
 })
+
+
+
+const sortedSources=Object.entries(sources)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,5)
+
+
+
+new Chart(document.getElementById("sourceChart"),{
+
+type:"bar",
+
+data:{
+labels:sortedSources.map(s=>s[0]),
+datasets:[{
+label:"Mentions",
+data:sortedSources.map(s=>s[1])
+}]
+}
+
+})
+
+
 
 }
 
@@ -243,11 +324,9 @@ data:Object.values(topics)
 
 loadNews()
 
-
 setInterval(loadNews,3600000)
 
 </script>
 
 </body>
-
 </html>
