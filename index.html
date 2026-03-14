@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Euroclear Narrative Intelligence Dashboard</title>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -13,7 +12,7 @@ font-family:Arial;
 background:#0b0f14;
 color:white;
 padding:30px;
-max-width:1200px;
+max-width:1100px;
 margin:auto;
 }
 
@@ -33,7 +32,7 @@ border-radius:8px;
 }
 
 .metric{
-font-size:28px;
+font-size:26px;
 font-weight:bold;
 }
 
@@ -64,10 +63,6 @@ color:#9ecbff;
 text-decoration:none;
 }
 
-.region-block{
-margin-top:10px;
-}
-
 </style>
 </head>
 
@@ -80,12 +75,12 @@ margin-top:10px;
 
 <div class="metric-card">
 <div>Total Articles</div>
-<div id="total" class="metric">Loading...</div>
+<div id="total" class="metric">Loading</div>
 </div>
 
 <div class="metric-card">
 <div>Russia Narrative Share</div>
-<div id="russiaShare" class="metric">Loading...</div>
+<div id="russiaShare" class="metric">Loading</div>
 </div>
 
 <div class="metric-card">
@@ -94,7 +89,6 @@ margin-top:10px;
 </div>
 
 </div>
-
 
 
 <div class="grid">
@@ -109,32 +103,12 @@ margin-top:10px;
 <canvas id="russiaTrendChart"></canvas>
 </div>
 
-<div class="card">
-<h3>Top Media Sources</h3>
-<canvas id="sourceChart"></canvas>
-</div>
-
-<div class="card">
-<h3>Media by Region</h3>
-<canvas id="regionChart"></canvas>
-</div>
-
 </div>
 
 
-
-<div class="grid">
-
 <div class="card">
-<h3>Latest Euroclear News</h3>
+<h3>Latest Articles (Trusted Media)</h3>
 <div id="news"></div>
-</div>
-
-<div class="card">
-<h3>Articles by Region</h3>
-<div id="regionArticles"></div>
-</div>
-
 </div>
 
 
@@ -145,169 +119,112 @@ Chart.defaults.animation=false
 
 let mentionsChart
 let russiaChart
-let sourceChart
-let regionChart
 
 
-/* TRUSTED MEDIA SOURCES */
+/* TRUSTED RSS FEEDS */
 
-const mediaSources={
+const feeds=[
 
-US:[
-"nytimes.com",
-"washingtonpost.com",
-"cnn.com",
-"bloomberg.com",
-"wsj.com",
-"reuters.com"
-],
+"https://feeds.bbci.co.uk/news/business/rss.xml",
+"http://rss.cnn.com/rss/cnn_world.rss",
+"https://www.reutersagency.com/feed/?best-topics=business-finance",
+"https://asia.nikkei.com/rss/feed",
+"https://www.ft.com/rss/home",
+"https://www.politico.com/rss/politics08.xml"
 
-UK:[
-"bbc.com",
-"bbc.co.uk",
-"theguardian.com",
-"ft.com"
-],
-
-Europe:[
-"politico.eu",
-"politico.com",
-"lemonde.fr",
-"elpais.com",
-"spiegel.de",
-"ansa.it"
-],
-
-Asia:[
-"nikkei.com",
-"scmp.com",
-"straitstimes.com"
-],
-
-MiddleEast:[
-"aljazeera.com",
-"arabnews.com"
-],
-
-RussiaCIS:[
-"tass.com",
-"interfax.ru",
-"kyivpost.com"
 ]
 
+
+async function fetchFeed(url){
+
+const proxy="https://api.allorigins.win/raw?url="+encodeURIComponent(url)
+
+const res=await fetch(proxy)
+const xml=await res.text()
+
+const parser=new DOMParser()
+const doc=parser.parseFromString(xml,"text/xml")
+
+return [...doc.querySelectorAll("item")]
+
 }
-
-const allowedSources=Object.values(mediaSources).flat()
-
 
 
 async function loadNews(){
 
-const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=180&format=json"
+try{
 
-const url="https://api.allorigins.win/raw?url="+encodeURIComponent(api)
+document.getElementById("status").innerText="Loading feeds..."
+
+let items=[]
+
+for(const feed of feeds){
 
 try{
 
-const res=await fetch(url,{cache:"no-store"})
-const data=await res.json()
+const feedItems=await fetchFeed(feed)
 
-const articles=data.articles || []
+items=items.concat(feedItems)
+
+}catch(e){}
+
+}
+
+
+/* FILTER EUROCLEAR */
+
+items=items.filter(i=>
+i.querySelector("title").textContent.toLowerCase().includes("euroclear")
+)
+
 
 document.getElementById("status").innerText="Live"
+document.getElementById("total").innerText=items.length
 
 
 let russia=0
 let mentionsByDay={}
 let russiaByDay={}
-let sources={}
-let regions={}
-let regionArticles={}
 
 
-articles.forEach(a=>{
+items.forEach(item=>{
 
-const source=(a.domain || "").replace("www.","")
+const title=item.querySelector("title").textContent.toLowerCase()
+const pubDate=new Date(item.querySelector("pubDate").textContent)
 
-/* FILTER SOURCES */
+const date=pubDate.toISOString().substring(0,10)
 
-if(!allowedSources.includes(source)) return
-
-
-const text=(a.title || "").toLowerCase()
-
-if(text.includes("russia")) russia++
-
-
-/* DATE EXTRACTION */
-
-if(a.seendate){
-
-let date=a.seendate.substring(0,8)
 
 if(!mentionsByDay[date]){
+
 mentionsByDay[date]=0
 russiaByDay[date]=0
+
 }
 
 mentionsByDay[date]++
 
-if(text.includes("russia")) russiaByDay[date]++
+
+if(title.includes("russia")){
+
+russia++
+russiaByDay[date]++
 
 }
-
-
-/* SOURCE COUNT */
-
-if(!sources[source]) sources[source]=0
-sources[source]++
-
-
-/* REGION DETECTION */
-
-let region="Global"
-
-for(const r in mediaSources){
-
-if(mediaSources[r].includes(source)){
-region=r
-}
-
-}
-
-if(!regions[region]) regions[region]=0
-regions[region]++
-
-
-if(!regionArticles[region]) regionArticles[region]=[]
-regionArticles[region].push(a)
 
 })
 
 
-const filteredCount=Object.values(regionArticles).flat().length
-
-document.getElementById("total").innerText=filteredCount
-
-
-const share=filteredCount?((russia/filteredCount)*100).toFixed(1):0
+const share=((russia/items.length)*100).toFixed(1)
 document.getElementById("russiaShare").innerText=share+"%"
 
 
-/* SORTED DATES */
+const labels=Object.keys(mentionsByDay).sort()
 
-const dates=Object.keys(mentionsByDay).sort()
-
-const labels=dates.map(d =>
-d.substring(0,4)+"-"+d.substring(4,6)+"-"+d.substring(6,8)
-)
-
-const values=dates.map(d=>mentionsByDay[d])
-const rvalues=dates.map(d=>russiaByDay[d])
+const values=labels.map(d=>mentionsByDay[d])
+const rvalues=labels.map(d=>russiaByDay[d])
 
 
-
-/* CHARTS */
 
 if(mentionsChart) mentionsChart.destroy()
 
@@ -315,12 +232,10 @@ mentionsChart=new Chart(
 document.getElementById("mentionsChart"),
 {
 type:"line",
-data:{
-labels:labels,
-datasets:[{data:values,tension:0.3}]
-}
+data:{labels:labels,datasets:[{data:values,tension:0.3}]}
 }
 )
+
 
 
 const rtrend=values.map((v,i)=>v?(rvalues[i]/v)*100:0)
@@ -331,104 +246,44 @@ russiaChart=new Chart(
 document.getElementById("russiaTrendChart"),
 {
 type:"line",
-data:{
-labels:labels,
-datasets:[{data:rtrend,tension:0.3}]
-}
+data:{labels:labels,datasets:[{data:rtrend,tension:0.3}]}
 }
 )
 
 
-const topSources=Object.entries(sources)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,6)
 
-if(sourceChart) sourceChart.destroy()
-
-sourceChart=new Chart(
-document.getElementById("sourceChart"),
-{
-type:"bar",
-data:{
-labels:topSources.map(s=>s[0]),
-datasets:[{data:topSources.map(s=>s[1])}]
-}
-}
-)
-
-
-if(regionChart) regionChart.destroy()
-
-regionChart=new Chart(
-document.getElementById("regionChart"),
-{
-type:"pie",
-data:{
-labels:Object.keys(regions),
-datasets:[{data:Object.values(regions)}]
-}
-}
-)
-
-
-/* NEWS FEED */
+/* ARTICLE LIST */
 
 const newsDiv=document.getElementById("news")
+
 newsDiv.innerHTML=""
 
-Object.values(regionArticles).flat().slice(0,10).forEach(a=>{
+items.slice(0,10).forEach(item=>{
 
-const item=document.createElement("div")
-item.className="list-item"
+const title=item.querySelector("title").textContent
+const link=item.querySelector("link").textContent
 
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+const div=document.createElement("div")
+div.className="list-item"
 
-newsDiv.appendChild(item)
+div.innerHTML="<a href='"+link+"' target='_blank'>"+title+"</a>"
 
-})
-
-
-/* ARTICLES BY REGION */
-
-const regionDiv=document.getElementById("regionArticles")
-regionDiv.innerHTML=""
-
-Object.keys(regionArticles).forEach(region=>{
-
-const block=document.createElement("div")
-block.className="region-block"
-
-block.innerHTML="<b>"+region+"</b>"
-
-regionArticles[region].slice(0,5).forEach(a=>{
-
-let source=(a.domain || "").split(".")[0]
-
-const item=document.createElement("div")
-item.className="list-item"
-
-item.innerHTML="<b>"+source+"</b> — <a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-
-block.appendChild(item)
-
-})
-
-regionDiv.appendChild(block)
+newsDiv.appendChild(div)
 
 })
 
 }catch(err){
 
-console.log(err)
-document.getElementById("status").innerText="API Error"
+document.getElementById("status").innerText="Feed Error"
 
 }
 
 }
+
 
 loadNews()
 
-setInterval(loadNews,7200000)
+setInterval(loadNews,3600000)
 
 </script>
 
