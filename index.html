@@ -17,9 +17,7 @@ max-width:1200px;
 margin:auto;
 }
 
-h1{
-margin-bottom:20px;
-}
+h1{margin-bottom:20px;}
 
 .metrics{
 display:grid;
@@ -37,7 +35,6 @@ border-radius:8px;
 .metric{
 font-size:28px;
 font-weight:bold;
-margin-top:5px;
 }
 
 .grid{
@@ -53,12 +50,10 @@ padding:20px;
 border-radius:8px;
 }
 
-canvas{
-max-height:220px;
-}
+canvas{max-height:220px;}
 
 .list-item{
-padding:5px 0;
+padding:6px 0;
 border-bottom:1px solid #222;
 }
 
@@ -72,7 +67,6 @@ margin-top:10px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -145,7 +139,7 @@ margin-top:10px;
 
 <script>
 
-Chart.defaults.animation = false
+Chart.defaults.animation=false
 
 let mentionsChart
 let russiaChart
@@ -154,11 +148,13 @@ let regionChart
 
 async function loadNews(){
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20sanctions&mode=ArtList&maxrecords=100&format=json"
+const api="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20sanctions&mode=ArtList&maxrecords=100&format=json"
+
+const url="https://api.allorigins.win/raw?url="+encodeURIComponent(api)
 
 try{
 
-const res=await fetch(url)
+const res=await fetch(url,{cache:"no-store"})
 const data=await res.json()
 
 const articles=data.articles || []
@@ -176,7 +172,7 @@ let regionArticles={}
 
 articles.forEach(a=>{
 
-const text=(a.title || "").toLowerCase()
+const text=(a.title||"").toLowerCase()
 
 if(text.includes("russia")) russia++
 
@@ -195,7 +191,7 @@ if(text.includes("russia")) russiaByDay[date]++
 
 }
 
-let source=(a.domain || "").replace("www.","")
+let source=(a.domain||"").replace("www.","")
 
 if(!sources[source]) sources[source]=0
 sources[source]++
@@ -203,9 +199,9 @@ sources[source]++
 
 let region="Global"
 
-if(source.includes("cnn") || source.includes("nytimes")) region="US"
-if(source.includes("bbc") || source.includes("guardian")) region="UK"
-if(source.includes("elpais") || source.includes("lemonde")) region="Europe"
+if(source.includes("cnn")||source.includes("nytimes")) region="US"
+if(source.includes("bbc")||source.includes("guardian")) region="UK"
+if(source.includes("elpais")||source.includes("lemonde")) region="Europe"
 if(source.includes("nikkei")) region="Asia"
 if(source.includes("tass")) region="Russia/CIS"
 
@@ -311,7 +307,7 @@ block.innerHTML="<b>"+region+"</b>"
 
 regionArticles[region].slice(0,5).forEach(a=>{
 
-let source=(a.domain || "").split(".")[0]
+let source=(a.domain||"").split(".")[0]
 
 const item=document.createElement("div")
 item.className="list-item"
@@ -329,6 +325,7 @@ regionDiv.appendChild(block)
 }catch(err){
 
 console.log(err)
+
 document.getElementById("status").innerText="API Error"
 
 }
