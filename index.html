@@ -26,10 +26,7 @@ padding:6px 0;
 border-bottom:1px solid #1f2a36;
 }
 
-a{
-color:#9cc7ff;
-text-decoration:none;
-}
+a{color:#9cc7ff;text-decoration:none;}
 </style>
 
 </head>
@@ -55,31 +52,25 @@ const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
 
 const data = await res.json()
 
-console.log("API DATA:", data)
+document.getElementById("total").textContent = data.total
 
-/* SAFE DEFAULTS /
+document.getElementById("russia").textContent =
+Number(data.russiaShare).toFixed(1) + "%"
 
-const total = data && data.total ? data.total : 0
-const russiaShare = data && data.russiaShare ? data.russiaShare : 0
-const sources = data && data.sources ? data.sources : {}
-const articles = data && data.articles ? data.articles : []
-
-/ KPIs /
-
-document.getElementById("total").innerText = total
-document.getElementById("russia").innerText = russiaShare.toFixed(1) + "%"
-document.getElementById("sources").innerText = Object.keys(sources).length
-
-/ ARTICLES */
+document.getElementById("sources").textContent =
+Object.keys(data.sources || {}).length
 
 const news = document.getElementById("news")
 
-articles.forEach(a=>{
+news.innerHTML = ""
 
-let div=document.createElement("div")
+;(data.articles || []).forEach(a => {
+
+const div = document.createElement("div")
+
 div.className="article"
 
-div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+div.innerHTML = "<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(div)
 
@@ -87,9 +78,7 @@ news.appendChild(div)
 
 }catch(err){
 
-console.log("DASHBOARD ERROR:", err)
-
-document.getElementById("total").innerText="Error loading dashboard"
+document.getElementById("total").textContent = "API failed"
 
 }
 
