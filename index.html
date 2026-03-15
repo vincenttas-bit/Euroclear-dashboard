@@ -185,19 +185,24 @@ color:#9fb3c8;
 </div>
 
 
-
 <script>
 
 Chart.defaults.animation=false
-
 let charts=[]
 
 async function loadNews(){
 
+try{
+
 const res = await fetch("/api/news")
+
+if(!res.ok){
+throw new Error("API error")
+}
+
 const data = await res.json()
 
-const articles=data.articles||[]
+const articles = data.articles || []
 
 document.getElementById("total").innerText=articles.length
 
@@ -219,12 +224,7 @@ Litigation:{},
 "Windfall Profit":{}
 }
 
-let regionArticles={
-US:[],
-UK:[],
-Europe:[],
-Asia:[]
-}
+let regionArticles={}
 
 const newsDiv=document.getElementById("news")
 const driversDiv=document.getElementById("drivers")
@@ -238,7 +238,7 @@ articles.forEach(a=>{
 
 const text=(a.title||"").toLowerCase()
 
-/* DRIVER KEYWORDS */
+/* narrative drivers /
 
 let keywords=[
 "sanctions",
@@ -279,6 +279,8 @@ let date=a.seendate.substring(0,8)
 
 if(!mentionsByDay[date]) mentionsByDay[date]=0
 mentionsByDay[date]++
+
+/ narrative timeline */
 
 if(text.includes("russia")){
 if(!narrativeTimeline.Russia[date]) narrativeTimeline.Russia[date]=0
@@ -332,13 +334,14 @@ if(["nikkei.com","scmp.com"].includes(source)) region="Asia"
 if(!regions[region]) regions[region]=0
 regions[region]++
 
+if(!regionArticles[region]) regionArticles[region]=[]
 regionArticles[region].push(a)
 
 }
 
 })
 
-document.getElementById("russiaShare").innerText=((russia/articles.length)100).toFixed(1)+"%"
+document.getElementById("russiaShare").innerText=((russia/articles.length)*100).toFixed(1)+"%"
 document.getElementById("sourceCount").innerText=Object.keys(sources).length
 
 const dates=Object.keys(mentionsByDay).sort()
@@ -392,8 +395,6 @@ type:"pie",
 data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
 }))
 
-/ SHOW DRIVERS /
-
 Object.entries(drivers)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,8)
@@ -404,8 +405,6 @@ item.innerText=d[0]+" ("+d[1]+")"
 driversDiv.appendChild(item)
 })
 
-/ NEWS /
-
 articles.slice(0,10).forEach(a=>{
 let item=document.createElement("div")
 item.className="list-item"
@@ -413,11 +412,7 @@ item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 newsDiv.appendChild(item)
 })
 
-/ REGION ARTICLES */
-
 Object.keys(regionArticles).forEach(region=>{
-if(regionArticles[region].length>0){
-
 let block=document.createElement("div")
 block.className="region-block"
 block.innerHTML="<h4>"+region+"</h4>"
@@ -430,9 +425,17 @@ block.appendChild(item)
 })
 
 regionArticlesDiv.appendChild(block)
+})
+
+}catch(e){
+
+console.error(e)
+
+document.getElementById("total").innerText="API error"
+document.getElementById("russiaShare").innerText="-"
+document.getElementById("sourceCount").innerText="-"
 
 }
-})
 
 }
 
