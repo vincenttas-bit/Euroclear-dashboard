@@ -145,7 +145,38 @@ const data = await res.json()
 
 const total = data.total || 0
 const russiaShare = data.russiaShare || 0
-const sources = data.sources || {}
+const rawSources = data.sources || {}
+
+const allowedSources = [
+"reuters.com",
+"bloomberg.com",
+"ft.com",
+"politico.com",
+"politico.eu",
+"bbc.com",
+"bbc.co.uk",
+"cnn.com",
+"nytimes.com",
+"washingtonpost.com",
+"theguardian.com",
+"lemonde.fr",
+"elpais.com",
+"spiegel.de",
+"ansa.it",
+"nikkei.com",
+"scmp.com",
+"aljazeera.com",
+"tass.com",
+"kyivpost.com"
+]
+
+const sources = {}
+
+Object.entries(rawSources).forEach(([domain,count])=>{
+if(allowedSources.includes(domain)){
+sources[domain] = count
+}
+})
 const articles = data.articles || []
 
 document.getElementById("total").innerText = total
