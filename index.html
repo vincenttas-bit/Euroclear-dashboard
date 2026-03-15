@@ -66,19 +66,10 @@ padding:18px;
 .panel h3{
 margin-top:0;
 font-size:14px;
-font-weight:600;
-color:#dce3ea;
 }
 
 canvas{
 max-height:230px;
-}
-
-.analytics{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
-margin-bottom:20px;
 }
 
 .list-item{
@@ -90,16 +81,6 @@ font-size:13px;
 a{
 color:#9cc7ff;
 text-decoration:none;
-}
-
-.region-block{
-margin-top:12px;
-}
-
-.region-block h4{
-margin-bottom:6px;
-font-size:13px;
-color:#9fb3c8;
 }
 
 </style>
@@ -123,7 +104,7 @@ color:#9fb3c8;
 
 <div class="kpi">
 <div class="kpi-title">Unique Sources</div>
-<div id="sourceCount" class="kpi-value">Loading</div>
+<div id="sources" class="kpi-value">Loading</div>
 </div>
 
 </div>
@@ -134,11 +115,6 @@ color:#9fb3c8;
 <div class="panel">
 <h3>Euroclear Mentions Trend</h3>
 <canvas id="mentionsChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Narrative Timeline</h3>
-<canvas id="narrativeChart"></canvas>
 </div>
 
 <div class="panel">
@@ -156,39 +132,17 @@ color:#9fb3c8;
 <canvas id="sourceChart"></canvas>
 </div>
 
-<div class="panel">
-<h3>Media Coverage by Region</h3>
-<canvas id="regionChart"></canvas>
 </div>
 
-</div>
-
-
-<div class="analytics">
-
-<div class="panel">
-<h3>Narrative Drivers</h3>
-<div id="drivers"></div>
-</div>
 
 <div class="panel">
 <h3>Latest Euroclear Coverage</h3>
 <div id="news"></div>
 </div>
 
-</div>
-
-
-<div class="panel">
-<h3>Articles by Region</h3>
-<div id="regionArticles"></div>
-</div>
 
 
 <script>
-
-Chart.defaults.animation=false
-let charts=[]
 
 async function loadNews(){
 
@@ -201,49 +155,27 @@ const articles = data.articles || []
 document.getElementById("total").innerText = articles.length
 
 let russia=0
+let sources={}
 let topics={Russia:0,Regulation:0,Technology:0,"Digital Assets":0}
 let sentiment={Positive:0,Neutral:0,Negative:0}
-
 let mentionsByDay={}
-let sources={}
-let regions={}
-let drivers={}
-let narrativeTimeline={Russia:{},Sanctions:{},Litigation:{},Frozen:{},Windfall:{}}
-let regionArticles={}
 
 articles.forEach(a=>{
 
 const title=(a.title||"").toLowerCase()
 
-/* narrative drivers /
-
-let keywords=["sanctions","frozen","litigation","windfall","digital","blockchain","settlement"]
-
-keywords.forEach(k=>{
-if(title.includes(k)){
-if(!drivers[k]) drivers[k]=0
-drivers[k]++
+if(title.includes("russia")){
+russia++
+topics.Russia++
 }
-})
-
-/ Russia /
-
-if(title.includes("russia")) russia++
-
-/ topics /
 
 if(title.includes("sanction")) topics.Regulation++
-if(title.includes("technology")||title.includes("tech")) topics.Technology++
+if(title.includes("tech")||title.includes("technology")) topics.Technology++
 if(title.includes("digital")||title.includes("crypto")) topics["Digital Assets"]++
-if(title.includes("russia")) topics.Russia++
-
-/ sentiment /
 
 if(title.includes("profit")||title.includes("growth")) sentiment.Positive++
-else if(title.includes("sanction")||title.includes("freeze")||title.includes("lawsuit")) sentiment.Negative++
+else if(title.includes("sanction")||title.includes("freeze")) sentiment.Negative++
 else sentiment.Neutral++
-
-/ timeline /
 
 if(a.seendate){
 
@@ -252,132 +184,70 @@ let date=a.seendate.substring(0,8)
 if(!mentionsByDay[date]) mentionsByDay[date]=0
 mentionsByDay[date]++
 
-if(title.includes("russia")){
-if(!narrativeTimeline.Russia[date]) narrativeTimeline.Russia[date]=0
-narrativeTimeline.Russia[date]++
 }
-
-}
-
-/ source /
 
 let source=(a.domain||"").replace("www.","")
-
-let allowed=[
-"reuters.com","bloomberg.com","ft.com","politico.com","politico.eu",
-"bbc.com","bbc.co.uk","theguardian.com",
-"nytimes.com","cnn.com",
-"lemonde.fr","spiegel.de","elpais.com",
-"nikkei.com","scmp.com"
-]
-
-if(allowed.includes(source)){
 
 if(!sources[source]) sources[source]=0
 sources[source]++
 
-let region="Europe"
-
-if(["nytimes.com","cnn.com"].includes(source)) region="US"
-if(["bbc.com","bbc.co.uk","theguardian.com"].includes(source)) region="UK"
-if(["nikkei.com","scmp.com"].includes(source)) region="Asia"
-
-if(!regions[region]) regions[region]=0
-regions[region]++
-
-if(!regionArticles[region]) regionArticles[region]=[]
-regionArticles[region].push(a)
-
-}
-
 })
-
-/ KPI */
 
 document.getElementById("russiaShare").innerText =
 ((russia/articles.length)100).toFixed(1)+"%"
 
-document.getElementById("sourceCount").innerText =
+document.getElementById("sources").innerText =
 Object.keys(sources).length
 
-/ charts /
+
+/ timeline */
 
 const dates=Object.keys(mentionsByDay).sort()
 const values=dates.map(d=>mentionsByDay[d])
 
-charts.forEach(c=>c.destroy())
-charts=[]
 
-charts.push(new Chart(document.getElementById("mentionsChart"),{
+new Chart(document.getElementById("mentionsChart"),{
 type:"line",
 data:{labels:dates,datasets:[{data:values,borderWidth:2}]}
-}))
-
-charts.push(new Chart(document.getElementById("topicChart"),{
-type:"pie",
-data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
-}))
-
-charts.push(new Chart(document.getElementById("sentimentChart"),{
-type:"pie",
-data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
-}))
-
-const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
-
-charts.push(new Chart(document.getElementById("sourceChart"),{
-type:"bar",
-data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
-}))
-
-charts.push(new Chart(document.getElementById("regionChart"),{
-type:"pie",
-data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
-}))
-
-/ drivers /
-
-const driversDiv=document.getElementById("drivers")
-
-Object.entries(drivers)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,8)
-.forEach(d=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerText=d[0]+" ("+d[1]+")"
-driversDiv.appendChild(item)
 })
 
-/ news /
+
+new Chart(document.getElementById("topicChart"),{
+type:"pie",
+data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
+})
+
+
+new Chart(document.getElementById("sentimentChart"),{
+type:"pie",
+data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
+})
+
+
+const sortedSources =
+Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
+
+
+new Chart(document.getElementById("sourceChart"),{
+type:"bar",
+data:{
+labels:sortedSources.map(s=>s[0]),
+datasets:[{data:sortedSources.map(s=>s[1])}]
+}
+})
+
 
 const news=document.getElementById("news")
 
 articles.slice(0,10).forEach(a=>{
+
 let div=document.createElement("div")
 div.className="list-item"
-div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
+div.innerHTML =
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
 news.appendChild(div)
-})
-
-/ region articles */
-
-const regionDiv=document.getElementById("regionArticles")
-
-Object.keys(regionArticles).forEach(region=>{
-
-let block=document.createElement("div")
-block.className="region-block"
-block.innerHTML="<h4>"+region+"</h4>"
-
-regionArticles[region].slice(0,5).forEach(a=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-block.appendChild(item)
-})
-
-regionDiv.appendChild(block)
 
 })
 
@@ -392,7 +262,6 @@ document.getElementById("total").innerText="API error"
 }
 
 loadNews()
-setInterval(loadNews,3600000)
 
 </script>
 
