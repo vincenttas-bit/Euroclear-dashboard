@@ -69,8 +69,6 @@ return true
 
 let russia=0
 let sources={}
-let russia=0
-let sources={}
 
 /* TRUSTED GLOBAL MEDIA */
 
