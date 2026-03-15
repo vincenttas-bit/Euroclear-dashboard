@@ -413,28 +413,44 @@ datasets:[{data:Object.values(regionCounts)}]
 })
 
 
+
 /* NARRATIVE DRIVERS */
 
-const keywords=[
-"sanctions","frozen assets","russian assets",
-"asset seizure","litigation","digital assets",
-"blockchain","settlement","central bank reserves"
-]
-
-let drivers={}
+let drivers={
+Sanctions:0,
+FrozenAssets:0,
+AssetSeizure:0,
+LegalDisputes:0,
+CentralBankReserves:0,
+DigitalAssets:0,
+SettlementInfrastructure:0
+}
 
 articles.forEach(a=>{
 
 const text=((a.title||"")+" "+(a.snippet||"")).toLowerCase()
 
-keywords.forEach(k=>{
-if(text.includes(k)){
-drivers[k]=(drivers[k]||0)+1
-}
-})
+if(/sanction/.test(text)) drivers.Sanctions++
+
+if(/frozen assets|immobilised assets|blocked assets/.test(text))
+drivers.FrozenAssets++
+
+if(/seize|seizure|confiscation/.test(text))
+drivers.AssetSeizure++
+
+if(/court|lawsuit|litigation|legal claim/.test(text))
+drivers.LegalDisputes++
+
+if(/central bank reserves|sovereign reserves/.test(text))
+drivers.CentralBankReserves++
+
+if(/crypto|digital asset|blockchain/.test(text))
+drivers.DigitalAssets++
+
+if(/settlement|clearing system|financial infrastructure/.test(text))
+drivers.SettlementInfrastructure++
 
 })
-
 const driversDiv=document.getElementById("drivers")
 
 Object.entries(drivers)
