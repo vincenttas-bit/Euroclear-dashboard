@@ -130,7 +130,7 @@ total:articles.length,
 russiaShare:articles.length?(russia/articles.length)*100:0,
 sources:sources,
 topics:topics,
-articles:articles.slice(0,50)
+articles:articles.slice(0,100)
 }
 
 cache=result
