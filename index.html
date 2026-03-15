@@ -233,7 +233,7 @@ else topics.Other++
 })
 
 
-/ TIME SERIES */
+/ * TIME SERIES */
 
 let mentionsByDay={}
 let russiaByDay={}
@@ -270,7 +270,7 @@ return total ? (r/total)*100 : 0
 })
 
 
-/ CHARTS /
+/ * CHARTS * /
 
 new Chart(document.getElementById("mentionsChart").getContext("2d"),{
 type:"line",
@@ -296,7 +296,7 @@ data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1
 })
 
 
-/ NARRATIVE DRIVERS /
+/* NARRATIVE DRIVERS * /
 
 const keywords=[
 "sanctions","frozen assets","russian assets",
@@ -330,7 +330,7 @@ driversDiv.appendChild(item)
 })
 
 
-/ NEWS /
+/ * NEWS * /
 
 const news=document.getElementById("news")
 
@@ -342,7 +342,7 @@ news.appendChild(item)
 })
 
 
-/ REGIONS */
+/* REGIONS */
 
 const regionMap={
 "United States":"US",
