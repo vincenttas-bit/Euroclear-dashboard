@@ -1,3 +1,4 @@
+d"}
 <!DOCTYPE html>
 <html>
 <head>
@@ -86,7 +87,6 @@ a{color:#9cc7ff;text-decoration:none;}
 <canvas id="chart"></canvas>
 
 <h3>Latest Coverage</h3>
-
 <div id="news"></div>
 
 <script>
@@ -95,75 +95,46 @@ async function load(){
 
 try{
 
-const res = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=Euroclear")
+const res = await fetch("/api/news")
 
 const data = await res.json()
 
-const articles = data.items || []
-
-/* update KPIs */
-
-document.getElementById("total").innerText = articles.length
-
-let russia = 0
-let sources = {}
-
-articles.forEach(a=>{
-
-let title=(a.title||"").toLowerCase()
-
-if(title.includes("russia")) russia++
-
-let domain=new URL(a.link).hostname.replace("www.","")
-
-if(!sources[domain]) sources[domain]=0
-
-sources[domain]++
-
-})
+document.getElementById("total").innerText = data.total
 
 document.getElementById("russia").innerText =
-articles.length ? ((russia/articles.length)100).toFixed(1)+"%" : "0%"
+data.russiaShare.toFixed(1) + "%"
 
 document.getElementById("sources").innerText =
-Object.keys(sources).length
-
-/ news /
+data.sources
 
 const news=document.getElementById("news")
 
-articles.slice(0,10).forEach(a=>{
+data.articles.forEach(a=>{
 
 let row=document.createElement("div")
 
 row.className="article"
 
-row.innerHTML="<a href='"+a.link+"' target='_blank'>"+a.title+"</a>"
+row.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(row)
 
 })
-
-/ chart */
-
-setTimeout(function(){
 
 new Chart(document.getElementById("chart"),{
 
 type:"bar",
 
 data:{
-labels:["Articles"],
-datasets:[{data:[articles.length]}]
+labels:["Euroclear Coverage"],
+datasets:[{data:[data.total]}]
 }
 
 })
 
-},200)
-
 }catch(e){
 
-document.getElementById("total").innerText="Error"
+document.getElementById("total").innerText="API error"
 
 }
 
@@ -174,4 +145,4 @@ load()
 </script>
 
 </body>
-</html>
+</ht
