@@ -467,12 +467,21 @@ driversDiv.appendChild(item)
 /* NEWS */
 
 const news=document.getElementById("news")
-
 articles.slice(0,10).forEach(a=>{
+
+let domain=(a.domain||"unknown")
+.replace("www.","")
+.replace("amp.","")
+
 let item=document.createElement("div")
 item.className="list-item"
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
+item.innerHTML=
+"<strong>"+domain+"</strong> — "+
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
 news.appendChild(item)
+
 })
 
 
