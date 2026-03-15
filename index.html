@@ -131,6 +131,10 @@ text-decoration:none;
 <div id="news"></div>
 </div>
 
+<div class="panel">
+<h3>Articles by Region</h3>
+<div id="regionArticles"></div>
+</div>
 
 <script>
 
@@ -260,6 +264,67 @@ div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 news.appendChild(div)
 
 })
+ /* REGIONAL BREAKDOWN */
+
+const regionMap={
+"United States":"US",
+"United Kingdom":"UK",
+"France":"Europe",
+"Germany":"Europe",
+"Spain":"Europe",
+"Italy":"Europe",
+"Belgium":"Europe",
+"Russia":"Russia/CIS",
+"Ukraine":"Russia/CIS",
+"India":"Asia",
+"China":"Asia",
+"Japan":"Asia",
+"Singapore":"Asia",
+"Australia":"Asia",
+"Qatar":"Middle East",
+"Saudi Arabia":"Middle East",
+"United Arab Emirates":"Middle East"
+}
+
+let regions={}
+
+articles.forEach(a=>{
+
+const country=a.sourcecountry || "Other"
+
+const region=regionMap[country] || "Other"
+
+if(!regions[region]) regions[region]=[]
+
+regions[region].push(a)
+
+})
+
+const container=document.getElementById("regionArticles")
+
+container.innerHTML=""
+
+Object.entries(regions).forEach(([region,list])=>{
+
+let block=document.createElement("div")
+
+block.innerHTML="<h4>"+region+"</h4>"
+
+list.slice(0,5).forEach(a=>{
+
+let item=document.createElement("div")
+
+item.className="article"
+
+item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
+block.appendChild(item)
+
+})
+
+container.appendChild(block)
+
+}) 
 
 }catch(err){
 
