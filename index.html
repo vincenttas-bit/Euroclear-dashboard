@@ -490,10 +490,8 @@ new Chart(document.getElementById("regionChart"),{
 type:"bar",
 data:{
 labels:sortedRegions.map(r=>r[0]),
-datasets:[{data:sortedRegions.map(r=>r[1])}]
-}
-})
-/* LATEST EUROCLEAR COVERAGE */
+datasets:[{data:sortedRegions.map(r=>r[
+ /* LATEST EUROCLEAR COVERAGE */
 
 const news=document.getElementById("news")
 
@@ -501,25 +499,20 @@ news.innerHTML=""
 
 articles.slice(0,10).forEach(a=>{
 
-if(!a || !a.title) return
-
 let domain=(a.domain||"unknown")
 .replace("www.","")
 .replace("amp.","")
 
-let link = a.url
-? "<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-: a.title
-
 let item=document.createElement("div")
 item.className="list-item"
 
-item.innerHTML =
-"<strong>"+domain+"</strong> — " + link
+item.innerHTML=
+"<strong>"+domain+"</strong> — "+
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(item)
 
-})
+}) 
 /* ARTICLES BY REGION */
 
 const regionDiv=document.getElementById("regionArticles")
