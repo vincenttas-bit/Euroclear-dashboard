@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <title>Euroclear Monitor</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
 body{
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
 background:#0b0f14;
 color:#e6edf3;
 padding:30px;
-max-width:1200px;
+max-width:1100px;
 margin:auto;
 }
 
@@ -35,17 +35,15 @@ font-size:26px;
 margin-top:6px;
 }
 
-canvas{
-background:#121821;
-padding:10px;
-border-radius:6px;
-margin-bottom:20px;
-}
-
 .article{
-padding:6px 0;
+padding:8px 0;
 border-bottom:1px solid #1f2a36;
 font-size:13px;
+}
+
+a{
+color:#9cc7ff;
+text-decoration:none;
 }
 
 </style>
@@ -68,56 +66,34 @@ Russia Share
 </div>
 
 <div class="box">
-Unique Sources
+Sources
 <div id="sources" class="value">Loading</div>
 </div>
 
 </div>
 
-<canvas id="chart"></canvas>
-
 <h3>Latest Coverage</h3>
+
 <div id="news"></div>
 
 <script>
 
-document.addEventListener("DOMContentLoaded", start)
-
-function start(){
-setTimeout(loadData,300)
-}
-
-async function loadData(){
+async function load(){
 
 try{
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
+const url="https://api.allorigins.win/raw?url=https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
 
-const response = await fetch(url)
+const res = await fetch(url)
 
-const data = await response.json()
+const data = await res.json()
 
-const articles = data && data.articles ? data.articles : []
-
-updateDashboard(articles)
-
-}catch(e){
-
-document.getElementById("total").innerText="Error"
-
-console.log(e)
-
-}
-
-}
-
-function updateDashboard(articles){
+const articles = data.articles || []
 
 document.getElementById("total").innerText = articles.length
 
 let russia=0
 let sources={}
-let mentions={}
 
 for(let i=0;i<articles.length;i++){
 
@@ -133,74 +109,37 @@ if(!sources[domain]) sources[domain]=0
 
 sources[domain]++
 
-if(a.seendate){
-
-let d=a.seendate.substring(0,8)
-
-if(!mentions[d]) mentions[d]=0
-
-mentions[d]++
-
-}
-
 }
 
 document.getElementById("russia").innerText =
-articles.length ? ((russia/articles.length)*100).toFixed(1)+"%" : "0%"
+articles.length?((russia/articles.length)*100).toFixed(1)+"%":"0%"
 
 document.getElementById("sources").innerText =
 Object.keys(sources).length
 
-renderChart(mentions)
-
-renderNews(articles)
-
-}
-
-function renderChart(mentions){
-
-let labels=Object.keys(mentions).sort()
-
-let values=[]
-
-for(let i=0;i<labels.length;i++){
-values.push(mentions[labels[i]])
-}
-
-if(labels.length>0){
-
-new Chart(document.getElementById("chart"),{
-type:"line",
-data:{
-labels:labels,
-datasets:[{
-data:values,
-borderWidth:2
-}]
-}
-})
-
-}
-
-}
-
-function renderNews(articles){
-
 const news=document.getElementById("news")
 
-for(let i=0;i<10 && i<articles.length;i++){
+for(let i=0;i<articles.length && i<10;i++){
 
 let row=document.createElement("div")
 
 row.className="article"
 
-row.innerHTML=articles[i].title
+row.innerHTML="<a href='"+articles[i].url+"' target='_blank'>"+articles[i].title+"</a>"
 
 news.appendChild(row)
 
 }
 
+}catch(e){
+
+document.getElementById("total").innerText="Error loading"
+
 }
+
+}
+
+setTimeout(load,300)
 
 </script>
 
