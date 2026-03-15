@@ -17,7 +17,7 @@ return res.status(200).json(cache)
 
 /* IMPROVED QUERY */
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20OR%20%22Euroclear%20Bank%22%20OR%20%22Euroclear%20settlement%22&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=(Euroclear%20OR%20%22Euroclear%20Bank%22)&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
 
 /* FETCH WITH TIMEOUT */
 
