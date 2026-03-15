@@ -14,21 +14,20 @@ background:#0b0f14;
 color:#e6edf3;
 margin:0;
 padding:30px;
-max-width:1500px;
+max-width:1400px;
 margin:auto;
 }
 
 h1{
 font-weight:600;
 margin-bottom:20px;
-color:#fff;
 }
 
 .kpi-strip{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:14px;
-margin-bottom:22px;
+gap:15px;
+margin-bottom:25px;
 }
 
 .kpi{
@@ -44,23 +43,23 @@ color:#8b9bb0;
 }
 
 .kpi-value{
-font-size:30px;
+font-size:28px;
+margin-top:5px;
 font-weight:600;
-margin-top:6px;
 }
 
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:18px;
+gap:20px;
 margin-bottom:20px;
 }
 
 .panel{
 background:#121821;
 border:1px solid #1f2a36;
-border-radius:6px;
 padding:18px;
+border-radius:6px;
 }
 
 .panel h3{
@@ -74,7 +73,7 @@ max-height:230px;
 
 .list-item{
 padding:6px 0;
-border-bottom:1px solid #1d2630;
+border-bottom:1px solid #1f2a36;
 font-size:13px;
 }
 
@@ -141,8 +140,9 @@ text-decoration:none;
 </div>
 
 
-
 <script>
+
+document.addEventListener("DOMContentLoaded", loadNews)
 
 async function loadNews(){
 
@@ -152,7 +152,7 @@ const res = await fetch("/api/news")
 const data = await res.json()
 const articles = data.articles || []
 
-document.getElementById("total").innerText = articles.length
+/* KPI calculation /
 
 let russia=0
 let sources={}
@@ -193,18 +193,21 @@ sources[source]++
 
 })
 
-document.getElementById("russiaShare").innerText =
+/ KPI display */
+
+document.getElementById("total").innerText=articles.length
+
+document.getElementById("russiaShare").innerText=
 ((russia/articles.length)100).toFixed(1)+"%"
 
-document.getElementById("sources").innerText =
+document.getElementById("sources").innerText=
 Object.keys(sources).length
 
 
-/ timeline */
+/ mentions timeline /
 
 const dates=Object.keys(mentionsByDay).sort()
 const values=dates.map(d=>mentionsByDay[d])
-
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
@@ -212,11 +215,15 @@ data:{labels:dates,datasets:[{data:values,borderWidth:2}]}
 })
 
 
+/ topic chart /
+
 new Chart(document.getElementById("topicChart"),{
 type:"pie",
 data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 })
 
+
+/ sentiment /
 
 new Chart(document.getElementById("sentimentChart"),{
 type:"pie",
@@ -224,9 +231,10 @@ data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
 })
 
 
-const sortedSources =
-Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
+/ sources /
 
+const sortedSources=
+Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
 
 new Chart(document.getElementById("sourceChart"),{
 type:"bar",
@@ -237,6 +245,8 @@ datasets:[{data:sortedSources.map(s=>s[1])}]
 })
 
 
+/ news list */
+
 const news=document.getElementById("news")
 
 articles.slice(0,10).forEach(a=>{
@@ -244,8 +254,7 @@ articles.slice(0,10).forEach(a=>{
 let div=document.createElement("div")
 div.className="list-item"
 
-div.innerHTML =
-"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(div)
 
@@ -260,10 +269,6 @@ document.getElementById("total").innerText="API error"
 }
 
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-  loadNews();
-});
 
 </script>
 
