@@ -440,12 +440,30 @@ let domain=(a.domain||"")
 .replace("amp.","")
 .toLowerCase()
 
+/* 1️⃣ explicit media override */
+
 let region=mediaRegionMap[domain]
+
+/* 2️⃣ fallback detection using domain */
 
 if(!region){
 
-const country=a.sourcecountry||"Other"
-region=regionMap[country]||"Other"
+if(domain.endsWith(".ru")) region="Russia/CIS"
+else if(domain.endsWith(".cn")) region="Asia"
+else if(domain.endsWith(".jp")) region="Asia"
+else if(domain.endsWith(".kr")) region="Asia"
+
+else if(
+domain.endsWith(".uk") ||
+domain.endsWith(".fr") ||
+domain.endsWith(".de") ||
+domain.endsWith(".es") ||
+domain.endsWith(".it")
+) region="Europe"
+
+else if(domain.endsWith(".com")) region="North America"
+
+else region="Other"
 
 }
 
@@ -454,7 +472,7 @@ region=regionMap[country]||"Other"
 if(!regionCounts[region]) regionCounts[region]=0
 regionCounts[region]++
 
-/* GROUP FOR REGION ARTICLE LIST */
+/* GROUP ARTICLES */
 
 if(!regions[region]) regions[region]=[]
 regions[region].push(a)
