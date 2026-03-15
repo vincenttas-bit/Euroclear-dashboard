@@ -3,13 +3,21 @@ export default async function handler(req, res) {
 try {
 
 const url =
-"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
+"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
 
 const response = await fetch(url, {
 headers: { "User-Agent": "Mozilla/5.0" }
 })
 
-const data = await response.json()
+const text = await response.text()
+
+let data = {}
+
+try {
+data = JSON.parse(text)
+} catch {
+data = {}
+}
 
 const articles = Array.isArray(data.articles) ? data.articles : []
 
@@ -41,7 +49,9 @@ res.status(200).json({
 
 total: articles.length,
 
-russiaShare: articles.length ? (russia / articles.length) * 100 : 0,
+russiaShare: articles.length
+? (russia / articles.length) * 100
+: 0,
 
 sources: sources,
 
@@ -51,18 +61,14 @@ articles: articles.slice(0,10)
 
 })
 
-} catch (error) {
-
-console.log("API ERROR:", error)
+} catch (err) {
 
 res.status(200).json({
-
-total: 0,
-russiaShare: 0,
-sources: {},
-topics: {},
-articles: []
-
+total:0,
+russiaShare:0,
+sources:{},
+topics:{},
+articles:[]
 })
 
 }
