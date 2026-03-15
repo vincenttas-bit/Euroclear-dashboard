@@ -368,7 +368,7 @@ new Chart(document.getElementById("sourceChart"),{
 type:"bar",
 data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
 })
-  /* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
+/* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
 
 const mediaRegionMap={
 "tass.com":"Russia/CIS",
@@ -386,15 +386,24 @@ const mediaRegionMap={
 "lemonde.fr":"Europe",
 "spiegel.de":"Europe",
 "elpais.com":"Europe",
+"lefigaro.fr":"Europe",
+"theguardian.com":"Europe",
+"telegraph.co.uk":"Europe",
 
 "nytimes.com":"North America",
 "washingtonpost.com":"North America",
+"wsj.com":"North America",
+"cnbc.com":"North America",
 
 "nikkei.com":"Asia",
 "asahi.com":"Asia",
+"japantimes.co.jp":"Asia",
 
 "xinhuanet.com":"Asia",
-"globaltimes.cn":"Asia"
+"globaltimes.cn":"Asia",
+
+"koreaherald.com":"Asia",
+"koreatimes.co.kr":"Asia"
 }
 
 /* COUNTRY → REGION */
@@ -417,6 +426,8 @@ const regionMap={
 "Australia":"Asia"
 }
 
+/* CONTAINERS */
+
 let regionCounts={}
 let regions={}
 
@@ -438,104 +449,38 @@ region=regionMap[country]||"Other"
 
 }
 
-/* COUNT FOR CHART */
+/* COUNT FOR REGION CHART */
 
 if(!regionCounts[region]) regionCounts[region]=0
 regionCounts[region]++
 
-/* GROUP FOR ARTICLE LIST */
+/* GROUP FOR REGION ARTICLE LIST */
 
 if(!regions[region]) regions[region]=[]
 regions[region].push(a)
 
 })
 
+/* SORT REGIONS */
+
+const sortedRegions=Object.entries(regionCounts)
+.sort((a,b)=>b[1]-a[1])
+
 /* REGION CHART */
 
 new Chart(document.getElementById("regionChart"),{
 type:"bar",
 data:{
-labels:Object.keys(regionCounts),
-datasets:[{data:Object.values(regionCounts)}]
+labels:sortedRegions.map(r=>r[0]),
+datasets:[{data:sortedRegions.map(r=>r[1])}]
 }
 })
-
-/* NARRATIVE DRIVERS */
-
-let drivers={
-Sanctions:0,
-FrozenAssets:0,
-AssetSeizure:0,
-LegalDisputes:0,
-CentralBankReserves:0,
-DigitalAssets:0,
-SettlementInfrastructure:0
-}
-
-articles.forEach(a=>{
-
-const text=((a.title||"")+" "+(a.snippet||"")).toLowerCase()
-
-if(/sanction/.test(text)) drivers.Sanctions++
-
-if(/frozen assets|immobilised assets|blocked assets/.test(text))
-drivers.FrozenAssets++
-
-if(/seize|seizure|confiscation/.test(text))
-drivers.AssetSeizure++
-
-if(/court|lawsuit|litigation|legal claim/.test(text))
-drivers.LegalDisputes++
-
-if(/central bank reserves|sovereign reserves/.test(text))
-drivers.CentralBankReserves++
-
-if(/crypto|digital asset|blockchain/.test(text))
-drivers.DigitalAssets++
-
-if(/settlement|clearing system|financial infrastructure/.test(text))
-drivers.SettlementInfrastructure++
-
-})
-const driversDiv=document.getElementById("drivers")
-
-Object.entries(drivers)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,8)
-.forEach(d=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerText=d[0]+" ("+d[1]+")"
-driversDiv.appendChild(item)
-})
-
-
-/* NEWS */
-
-const news=document.getElementById("news")
-articles.slice(0,10).forEach(a=>{
-
-let domain=(a.domain||"unknown")
-.replace("www.","")
-.replace("amp.","")
-
-let item=document.createElement("div")
-item.className="list-item"
-
-item.innerHTML=
-"<strong>"+domain+"</strong> — "+
-"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-
-news.appendChild(item)
-
-})
-
 
 /* ARTICLES BY REGION */
 
 const regionDiv=document.getElementById("regionArticles")
 
-regionDiv.innerHTML=""   // clear old content
+regionDiv.innerHTML=""
 
 Object.entries(regions)
 .sort((a,b)=>b[1].length-a[1].length)
