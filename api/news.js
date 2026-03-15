@@ -3,10 +3,13 @@ export default async function handler(req, res) {
 try {
 
 const url =
-"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json&sort=datedesc"
 
 const response = await fetch(url, {
-headers: { "User-Agent": "Mozilla/5.0" }
+headers: {
+"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+"Accept": "application/json"
+}
 })
 
 const text = await response.text()
