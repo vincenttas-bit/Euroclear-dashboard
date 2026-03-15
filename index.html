@@ -1,4 +1,3 @@
-027"}
 <!DOCTYPE html>
 <html>
 <head>
@@ -14,8 +13,11 @@ background:#111;
 color:white;
 padding:30px;
 }
+
 canvas{
-max-width:600px;
+width:600px;
+height:300px;
+background:#222;
 }
 </style>
 </head>
@@ -26,15 +28,13 @@ max-width:600px;
 
 <div id="status">Loading...</div>
 
-<canvas id="testChart"></canvas>
+<canvas id="testChart" height="300"></canvas>
 
 <script>
 
 window.onload = async function(){
 
 console.log("Chart.js loaded:", typeof Chart)
-
-/* TEST CHART FIRST /
 
 const ctx = document.getElementById("testChart")
 
@@ -48,12 +48,8 @@ data:[5,10,7]
 }
 })
 
-/ TEST API */
-
 const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
 const data = await res.json()
-
-console.log("API DATA:",data)
 
 document.getElementById("status").innerText =
 "Articles: " + data.total
@@ -63,4 +59,4 @@ document.getElementById("status").innerText =
 </script>
 
 </body>
-</
+</html>
