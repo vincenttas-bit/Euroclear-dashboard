@@ -16,14 +16,22 @@ return
 
 /* IMPROVED QUERY */
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20OR%20%22Euroclear%20Bank%22&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20OR%20%22Euroclear%20Bank%22%20OR%20%22Euroclear%20settlement%22&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
+
+/* FETCH WITH TIMEOUT */
+
+const controller=new AbortController()
+const timeout=setTimeout(()=>controller.abort(),8000)
 
 const response=await fetch(url,{
 headers:{
 "User-Agent":"Mozilla/5.0",
 "Accept":"application/json"
-}
+},
+signal:controller.signal
 })
+
+clearTimeout(timeout)
 
 const data=await response.json()
 
@@ -35,7 +43,7 @@ const seen=new Set()
 
 articles=articles.filter(a=>{
 
-const title=(a.title||"").toLowerCase()
+const title=(a.title||"").toLowerCase().replace(/[^\w\s]/g,"")
 const domain=(a.domain||"")
 const key=title+"_"+domain
 
@@ -47,11 +55,18 @@ return true
 
 let russia=0
 let sources={}
+
+/* FIXED TOPIC MODEL */
+
 let topics={
 Russia:0,
-Regulation:0,
+Sanctions:0,
+FrozenAssets:0,
+CentralBankReserves:0,
+LegalDisputes:0,
+EUNegotiations:0,
 Technology:0,
-Digital:0,
+DigitalAssets:0,
 Other:0
 }
 
@@ -101,6 +116,12 @@ if(!sources[domain]) sources[domain]=0
 sources[domain]++
 
 })
+
+/* SORT SOURCES BY FREQUENCY */
+
+sources=Object.fromEntries(
+Object.entries(sources).sort((a,b)=>b[1]-a[1])
+)
 
 /* RETURN MORE ARTICLES FOR ANALYTICS */
 
