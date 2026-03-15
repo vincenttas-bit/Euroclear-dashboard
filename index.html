@@ -136,11 +136,9 @@ text-decoration:none;
 
 async function load(){
 
-const res =
-await fetch("https://euroclear-dashboard.vercel.app/api/news")
+const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
 
-const data =
-await res.json()
+const data = await res.json()
 
 const total = data.total || 0
 const russiaShare = data.russiaShare || 0
@@ -156,7 +154,7 @@ document.getElementById("sources").innerText =
 Object.keys(sources).length
 
 
-/* TOPICS /
+/* TOPIC ANALYSIS /
 
 let topics={
 Russia:0,
@@ -177,24 +175,37 @@ if(t.includes("digital")||t.includes("crypto")) topics.Digital++
 })
 
 
+/ TOPIC CHART /
+
+if(Object.values(topics).some(v=>v>0)){
+
 new Chart(document.getElementById("topicChart"),{
 
 type:"pie",
 
 data:{
 labels:Object.keys(topics),
-datasets:[{data:Object.values(topics)}]
+datasets:[{
+data:Object.values(topics)
+}]
 }
 
 })
 
+}
 
-/ SOURCES /
+
+/ SOURCE ANALYSIS /
 
 const sortedSources =
 Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,6)
+
+
+/ SOURCE CHART /
+
+if(sortedSources.length>0){
 
 new Chart(document.getElementById("sourceChart"),{
 
@@ -202,23 +213,25 @@ type:"bar",
 
 data:{
 labels:sortedSources.map(s=>s[0]),
-datasets:[{data:sortedSources.map(s=>s[1])}]
+datasets:[{
+data:sortedSources.map(s=>s[1])
+}]
 }
 
 })
 
+}
 
-/ ARTICLES */
 
-const news =
-document.getElementById("news")
+/ NEWS FEED */
+
+const news = document.getElementById("news")
 
 news.innerHTML=""
 
 articles.forEach(a=>{
 
-let div =
-document.createElement("div")
+let div = document.createElement("div")
 
 div.className="article"
 
