@@ -368,7 +368,34 @@ new Chart(document.getElementById("sourceChart"),{
 type:"bar",
 data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
 })
+/* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
 
+const mediaRegionMap={
+"tass.com":"Russia/CIS",
+"rt.com":"Russia/CIS",
+"ria.ru":"Russia/CIS",
+
+"reuters.com":"Global",
+"apnews.com":"Global",
+"bloomberg.com":"Global",
+
+"ft.com":"Europe",
+"bbc.com":"Europe",
+"bbc.co.uk":"Europe",
+"politico.eu":"Europe",
+"lemonde.fr":"Europe",
+"spiegel.de":"Europe",
+"elpais.com":"Europe",
+
+"nytimes.com":"North America",
+"washingtonpost.com":"North America",
+
+"nikkei.com":"Asia",
+"asahi.com":"Asia",
+
+"xinhuanet.com":"Asia",
+"globaltimes.cn":"Asia"
+}
 
 /* GLOBAL MEDIA DISTRIBUTION */
 
@@ -390,19 +417,19 @@ const regionMap={
 "Australia":"Asia"
 }
 
-let regionCounts={}
+let domain=(a.domain||"")
+.replace("www.","")
+.replace("amp.","")
+.toLowerCase()
 
-articles.forEach(a=>{
+let region=mediaRegionMap[domain]
+
+if(!region){
 
 const country=a.sourcecountry||"Other"
+region=regionMap[country]||"Other"
 
-const region=regionMap[country]||"Other"
-
-if(!regionCounts[region]) regionCounts[region]=0
-
-regionCounts[region]++
-
-})
+}
 
 new Chart(document.getElementById("regionChart"),{
 type:"bar",
@@ -487,17 +514,19 @@ news.appendChild(item)
 
 /* ARTICLES BY REGION */
 
-let regions={}
+let domain=(a.domain||"")
+.replace("www.","")
+.replace("amp.","")
+.toLowerCase()
 
-articles.forEach(a=>{
+let region=mediaRegionMap[domain]
+
+if(!region){
 
 const country=a.sourcecountry||"Other"
-const region=regionMap[country]||"Other"
+region=regionMap[country]||"Other"
 
-if(!regions[region]) regions[region]=[]
-regions[region].push(a)
-
-})
+}
 
 const regionDiv=document.getElementById("regionArticles")
 
