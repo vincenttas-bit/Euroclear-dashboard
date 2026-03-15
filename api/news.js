@@ -7,7 +7,7 @@ try{
 
 const now=Date.now()
 
-/* CACHE FOR 10 MINUTES */
+/* CACHE FOR 1 HOUR */
 
 if(cache && (now-lastFetch)<3600000){
 res.status(200).json(cache)
