@@ -209,20 +209,59 @@ return true
 
 / TOPIC ANALYSIS /
 
-let topics={Russia:0,Regulation:0,Technology:0,Digital:0,Other:0}
+/* SMART TOPIC MODEL */
+
+let topics={
+FrozenAssets:0,
+CentralBankReserves:0,
+LegalDisputes:0,
+EUPolicy:0,
+Sanctions:0,
+FinancialMarkets:0,
+DigitalAssets:0,
+Technology:0,
+RussiaGeopolitics:0,
+Other:0
+}
 
 articles.forEach(a=>{
 
-const t=(a.title||"").toLowerCase()
+const text=((a.title||"")+" "+(a.snippet||"")).toLowerCase()
 
-if(t.includes("sanction")||t.includes("frozen assets")) topics.Regulation++
-else if(t.includes("digital")||t.includes("crypto")) topics.Digital++
-else if(t.includes("tech")||t.includes("platform")) topics.Technology++
-else if(t.includes("russia")) topics.Russia++
-else topics.Other++
+/* NARRATIVE PRIORITY */
+
+if(/frozen assets|asset freeze|asset seizure|confiscation|immobilised assets/.test(text)){
+topics.FrozenAssets++
+
+}else if(/central bank reserves|sovereign reserves|russian reserves/.test(text)){
+topics.CentralBankReserves++
+
+}else if(/court|lawsuit|legal|litigation|claim|appeal|judgment/.test(text)){
+topics.LegalDisputes++
+
+}else if(/eu plan|eu proposal|eu talks|eu debate|brussels|european commission/.test(text)){
+topics.EUPolicy++
+
+}else if(/sanction|sanctions regime|sanctions package/.test(text)){
+topics.Sanctions++
+
+}else if(/bond|market|trading|dividend|shareholders|ipo|stock/.test(text)){
+topics.FinancialMarkets++
+
+}else if(/digital asset|crypto|blockchain|token/.test(text)){
+topics.DigitalAssets++
+
+}else if(/tech|technology|platform|infrastructure|settlement system/.test(text)){
+topics.Technology++
+
+}else if(/russia|kremlin|moscow/.test(text)){
+topics.RussiaGeopolitics++
+
+}else{
+topics.Other++
+}
 
 })
-
 
 / TIME SERIES */
 
