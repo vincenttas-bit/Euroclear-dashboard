@@ -191,7 +191,10 @@ if(title.includes("russia")) russia++
 
 /* SOURCE COUNT */
 
-let domain=(a.domain||"unknown").replace("www.","")
+let domain=(a.domain||"unknown")
+  .replace("www.","")
+  .replace("amp.","")
+  .toLowerCase()
 
 /* FILTER NON-TRUSTED SOURCES */
 
