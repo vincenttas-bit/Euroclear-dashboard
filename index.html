@@ -368,7 +368,7 @@ new Chart(document.getElementById("sourceChart"),{
 type:"bar",
 data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
 })
-/* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
+  /* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
 
 const mediaRegionMap={
 "tass.com":"Russia/CIS",
@@ -397,7 +397,7 @@ const mediaRegionMap={
 "globaltimes.cn":"Asia"
 }
 
-/* GLOBAL MEDIA DISTRIBUTION */
+/* COUNTRY → REGION */
 
 const regionMap={
 "United States":"North America",
@@ -417,6 +417,13 @@ const regionMap={
 "Australia":"Asia"
 }
 
+let regionCounts={}
+let regions={}
+
+/* CLASSIFY ARTICLES */
+
+articles.forEach(a=>{
+
 let domain=(a.domain||"")
 .replace("www.","")
 .replace("amp.","")
@@ -431,6 +438,20 @@ region=regionMap[country]||"Other"
 
 }
 
+/* COUNT FOR CHART */
+
+if(!regionCounts[region]) regionCounts[region]=0
+regionCounts[region]++
+
+/* GROUP FOR ARTICLE LIST */
+
+if(!regions[region]) regions[region]=[]
+regions[region].push(a)
+
+})
+
+/* REGION CHART */
+
 new Chart(document.getElementById("regionChart"),{
 type:"bar",
 data:{
@@ -438,8 +459,6 @@ labels:Object.keys(regionCounts),
 datasets:[{data:Object.values(regionCounts)}]
 }
 })
-
-
 
 /* NARRATIVE DRIVERS */
 
