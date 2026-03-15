@@ -1,26 +1,21 @@
-}
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Euroclear Intelligence Monitor</title>
-
+<title>Euroclear Monitor</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body{
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
 background:#0b0f14;
 color:#e6edf3;
 padding:30px;
-max-width:1300px;
+max-width:1200px;
 margin:auto;
 }
 
-h1{
-margin-bottom:20px;
-}
+h1{margin-bottom:20px;}
 
 .kpis{
 display:grid;
@@ -29,47 +24,29 @@ gap:15px;
 margin-bottom:25px;
 }
 
-.kpi{
+.box{
 background:#121821;
 padding:15px;
 border-radius:6px;
 }
 
-.kpi-title{
-font-size:12px;
-color:#8b9bb0;
-}
-
-.kpi-value{
+.value{
 font-size:26px;
-margin-top:5px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-bottom:20px;
-}
-
-.panel{
-background:#121821;
-padding:15px;
-border-radius:6px;
+margin-top:6px;
 }
 
 canvas{
-max-height:230px;
+background:#121821;
+padding:10px;
+border-radius:6px;
+margin-bottom:20px;
 }
 
-.news{
-font-size:13px;
+.article{
 padding:6px 0;
 border-bottom:1px solid #1f2a36;
+font-size:13px;
 }
-
-a{color:#9cc7ff;text-decoration:none}
-
 </style>
 </head>
 
@@ -79,44 +56,27 @@ a{color:#9cc7ff;text-decoration:none}
 
 <div class="kpis">
 
-<div class="kpi">
-<div class="kpi-title">Total Articles</div>
-<div id="total" class="kpi-value">Loading</div>
+<div class="box">
+Total Articles
+<div id="total" class="value">Loading</div>
 </div>
 
-<div class="kpi">
-<div class="kpi-title">Russia Narrative Share</div>
-<div id="russia" class="kpi-value">Loading</div>
+<div class="box">
+Russia Share
+<div id="russia" class="value">Loading</div>
 </div>
 
-<div class="kpi">
-<div class="kpi-title">Unique Sources</div>
-<div id="sources" class="kpi-value">Loading</div>
-</div>
-
-</div>
-
-
-<div class="grid">
-
-<div class="panel">
-<h3>Mentions Trend</h3>
-<canvas id="trend"></canvas>
-</div>
-
-<div class="panel">
-<h3>Top Sources</h3>
-<canvas id="sourceChart"></canvas>
+<div class="box">
+Unique Sources
+<div id="sources" class="value">Loading</div>
 </div>
 
 </div>
 
+<canvas id="chart"></canvas>
 
-<div class="panel">
 <h3>Latest Coverage</h3>
 <div id="news"></div>
-</div>
-
 
 <script>
 
@@ -124,13 +84,17 @@ async function load(){
 
 try{
 
-const res = await fetch("/api/news")
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
 
-const text = await res.text()
+const response = await fetch(url)
 
-const data = JSON.parse(text)
+if(!response.ok){
+throw new Error("API failed")
+}
 
-const articles = Array.isArray(data.articles) ? data.articles : []
+const data = await response.json()
+
+const articles = data && data.articles ? data.articles : []
 
 document.getElementById("total").innerText = articles.length
 
@@ -138,17 +102,19 @@ let russia=0
 let sources={}
 let mentions={}
 
-articles.forEach(a=>{
+for(let i=0;i<articles.length;i++){
+
+let a=articles[i]
 
 let title=(a.title||"").toLowerCase()
 
 if(title.includes("russia")) russia++
 
-let src=(a.domain||"unknown").replace("www.","")
+let domain=(a.domain||"unknown").replace("www.","")
 
-if(!sources[src]) sources[src]=0
+if(!sources[domain]) sources[domain]=0
 
-sources[src]++
+sources[domain]++
 
 if(a.seendate){
 
@@ -160,7 +126,7 @@ mentions[d]++
 
 }
 
-})
+}
 
 document.getElementById("russia").innerText =
 articles.length ? ((russia/articles.length)100).toFixed(1)+"%" : "0%"
@@ -168,32 +134,21 @@ articles.length ? ((russia/articles.length)100).toFixed(1)+"%" : "0%"
 document.getElementById("sources").innerText =
 Object.keys(sources).length
 
-/ trend /
+/ chart /
 
-const dates=Object.keys(mentions).sort()
+let labels=Object.keys(mentions).sort()
 
-new Chart(document.getElementById("trend"),{
+let values=[]
+
+for(let i=0;i<labels.length;i++){
+values.push(mentions[labels[i]])
+}
+
+new Chart(document.getElementById("chart"),{
 type:"line",
 data:{
-labels:dates,
-datasets:[{
-data:dates.map(d=>mentions[d]),
-borderWidth:2
-}]
-}
-})
-
-/ sources /
-
-const top=Object.entries(sources)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,6)
-
-new Chart(document.getElementById("sourceChart"),{
-type:"bar",
-data:{
-labels:top.map(s=>s[0]),
-datasets:[{data:top.map(s=>s[1])}]
+labels:labels,
+datasets:[{data:values,borderWidth:2}]
 }
 })
 
@@ -201,31 +156,29 @@ datasets:[{data:top.map(s=>s[1])}]
 
 const news=document.getElementById("news")
 
-articles.slice(0,10).forEach(a=>{
+for(let i=0;i<10 && i<articles.length;i++){
 
-const row=document.createElement("div")
+let row=document.createElement("div")
 
-row.className="news"
+row.className="article"
 
-row.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+row.innerHTML=articles[i].title
 
 news.appendChild(row)
 
-})
+}
 
-}catch(e){
+}catch(err){
 
-document.getElementById("total").innerText="API error"
-
-console.error(e)
+document.getElementById("total").innerText="Error"
 
 }
 
 }
 
-load()
+setTimeout(load,200)
 
 </script>
 
 </body>
-</html
+</html>
