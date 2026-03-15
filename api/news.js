@@ -61,14 +61,30 @@ const title=(a.title||"").toLowerCase()
 
 /* TOPIC PRIORITY */
 
-if(/sanction|freeze|frozen|seizure|confiscation/i.test(title)){
-topics.Regulation++
+if(/frozen russian assets|frozen assets|asset freeze|asset seizure|confiscation/i.test(title)){
+topics.FrozenAssets++
+
+}else if(/central bank reserves|sovereign reserves|russian reserves/i.test(title)){
+topics.CentralBankReserves++
+
+}else if(/court|lawsuit|legal|litigation|claim|appeal/i.test(title)){
+topics.LegalDisputes++
+
+}else if(/eu negotiation|eu talks|brussels negotiation|eu debate/i.test(title)){
+topics.EUNegotiations++
+
+}else if(/sanction/i.test(title)){
+topics.Sanctions++
+
 }else if(/digital|crypto|blockchain/i.test(title)){
-topics.Digital++
+topics.DigitalAssets++
+
 }else if(/tech|technology|platform/i.test(title)){
 topics.Technology++
+
 }else if(/russia|kremlin/i.test(title)){
 topics.Russia++
+
 }else{
 topics.Other++
 }
