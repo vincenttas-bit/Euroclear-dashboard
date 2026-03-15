@@ -6,32 +6,34 @@ const url =
 "https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json&sort=datedesc"
 
 const response = await fetch(url, {
+method: "GET",
 headers: {
-"User-Agent": "Mozilla/5.0",
-"Accept": "application/json"
+"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+"Accept": "application/json",
+"Accept-Language": "en-US,en;q=0.9"
 }
 })
 
-const data = await response.json()
+const text = await response.text()
+
+let data = {}
+
+try {
+data = JSON.parse(text)
+} catch {
+data = {}
+}
 
 const articles = Array.isArray(data.articles) ? data.articles : []
 
 let russia = 0
 let sources = {}
-let topics = {Russia:0, Regulation:0, Technology:0, Digital:0}
 
 articles.forEach(a => {
 
 const title = (a.title || "").toLowerCase()
 
-if (title.includes("russia")) {
-russia++
-topics.Russia++
-}
-
-if (title.includes("sanction")) topics.Regulation++
-if (title.includes("tech") || title.includes("technology")) topics.Technology++
-if (title.includes("digital") || title.includes("crypto")) topics.Digital++
+if (title.includes("russia")) russia++
 
 const domain = (a.domain || "unknown").replace("www.","")
 
@@ -50,8 +52,6 @@ russiaShare: articles.length
 
 sources: sources,
 
-topics: topics,
-
 articles: articles.slice(0,10)
 
 })
@@ -62,7 +62,6 @@ res.status(200).json({
 total:0,
 russiaShare:0,
 sources:{},
-topics:{},
 articles:[]
 })
 
