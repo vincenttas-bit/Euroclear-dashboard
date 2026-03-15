@@ -25,7 +25,7 @@ margin-bottom:20px;
 
 .kpi-strip{
 display:grid;
-grid-template-columns:repeat(3,1fr);
+grid-template-columns:repeat(6,1fr);
 gap:14px;
 margin-bottom:22px;
 }
@@ -43,7 +43,7 @@ color:#8b9bb0;
 }
 
 .kpi-value{
-font-size:30px;
+font-size:26px;
 font-weight:600;
 margin-top:6px;
 }
@@ -110,13 +110,28 @@ color:#9fb3c8;
 <div class="kpi-strip">
 
 <div class="kpi">
-<div class="kpi-title">Total Euroclear Articles</div>
+<div class="kpi-title">Total Articles</div>
 <div id="total" class="kpi-value">Loading</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Articles (24h)</div>
+<div id="last24h" class="kpi-value">Loading</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Articles (7d)</div>
+<div id="last7d" class="kpi-value">Loading</div>
 </div>
 
 <div class="kpi">
 <div class="kpi-title">Russia Narrative Share</div>
 <div id="russiaShare" class="kpi-value">Loading</div>
+</div>
+
+<div class="kpi">
+<div class="kpi-title">Narrative Momentum</div>
+<div id="momentum" class="kpi-value">Loading</div>
 </div>
 
 <div class="kpi">
@@ -126,29 +141,36 @@ color:#9fb3c8;
 
 </div>
 
+
 <div class="grid">
 
 <div class="panel">
 <h3>Euroclear Mentions Trend</h3>
-<canvas id="mentionsChart" height="300"></canvas>
+<canvas id="mentionsChart"></canvas>
 </div>
 
 <div class="panel">
 <h3>Russia Narrative Trend</h3>
-<canvas id="russiaTrendChart" height="300"></canvas>
+<canvas id="russiaTrendChart"></canvas>
 </div>
 
 <div class="panel">
 <h3>Topic Distribution</h3>
-<canvas id="topicChart" height="300"></canvas>
+<canvas id="topicChart"></canvas>
 </div>
 
 <div class="panel">
 <h3>Top Media Sources</h3>
-<canvas id="sourceChart" height="300"></canvas>
+<canvas id="sourceChart"></canvas>
+</div>
+
+<div class="panel">
+<h3>Global Media Distribution</h3>
+<canvas id="regionChart"></canvas>
 </div>
 
 </div>
+
 
 <div class="analytics">
 
@@ -164,10 +186,12 @@ color:#9fb3c8;
 
 </div>
 
+
 <div class="panel">
 <h3>Articles by Region</h3>
 <div id="regionArticles"></div>
 </div>
+
 
 <script>
 
@@ -178,14 +202,10 @@ async function load(){
 let data={}
 
 try{
-
 const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
 data = await res.json()
-
 }catch(e){
-
 console.log("API error",e)
-
 }
 
 let articles = data.articles || []
@@ -196,7 +216,7 @@ document.getElementById("russiaShare").innerText = ((data.russiaShare)||0).toFix
 document.getElementById("sources").innerText = Object.keys(sources).length
 
 
- /* REMOVE DUPLICATES */ 
+/* REMOVE DUPLICATES */
 
 const seen=new Set()
 
@@ -207,7 +227,31 @@ return true
 })
 
 
-/ TOPIC ANALYSIS /
+/* ACTIVITY METRICS */
+
+let now=new Date()
+
+let last24h=0
+let last7d=0
+
+articles.forEach(a=>{
+
+if(!a.seendate) return
+
+let d=new Date(
+a.seendate.substring(0,4)+"-"+a.seendate.substring(4,6)+"-"+a.seendate.substring(6,8)
+)
+
+let diff=(now-d)/(1000*60*60)
+
+if(diff<=24) last24h++
+if(diff<=168) last7d++
+
+})
+
+document.getElementById("last24h").innerText=last24h
+document.getElementById("last7d").innerText=last7d
+
 
 /* SMART TOPIC MODEL */
 
@@ -228,42 +272,21 @@ articles.forEach(a=>{
 
 const text=((a.title||"")+" "+(a.snippet||"")).toLowerCase()
 
-/* NARRATIVE PRIORITY */
-
-if(/frozen assets|asset freeze|asset seizure|confiscation|immobilised assets/.test(text)){
-topics.FrozenAssets++
-
-}else if(/central bank reserves|sovereign reserves|russian reserves/.test(text)){
-topics.CentralBankReserves++
-
-}else if(/court|lawsuit|legal|litigation|claim|appeal|judgment/.test(text)){
-topics.LegalDisputes++
-
-}else if(/eu plan|eu proposal|eu talks|eu debate|brussels|european commission/.test(text)){
-topics.EUPolicy++
-
-}else if(/sanction|sanctions regime|sanctions package/.test(text)){
-topics.Sanctions++
-
-}else if(/bond|market|trading|dividend|shareholders|ipo|stock/.test(text)){
-topics.FinancialMarkets++
-
-}else if(/digital asset|crypto|blockchain|token/.test(text)){
-topics.DigitalAssets++
-
-}else if(/tech|technology|platform|infrastructure|settlement system/.test(text)){
-topics.Technology++
-
-}else if(/russia|kremlin|moscow/.test(text)){
-topics.RussiaGeopolitics++
-
-}else{
-topics.Other++
-}
+if(/frozen assets|asset freeze|asset seizure|confiscation/.test(text)) topics.FrozenAssets++
+else if(/central bank reserves|sovereign reserves/.test(text)) topics.CentralBankReserves++
+else if(/court|lawsuit|litigation/.test(text)) topics.LegalDisputes++
+else if(/eu plan|eu proposal|brussels/.test(text)) topics.EUPolicy++
+else if(/sanction/.test(text)) topics.Sanctions++
+else if(/bond|market|trading|dividend/.test(text)) topics.FinancialMarkets++
+else if(/crypto|digital asset|blockchain/.test(text)) topics.DigitalAssets++
+else if(/tech|technology|platform/.test(text)) topics.Technology++
+else if(/russia|kremlin/.test(text)) topics.RussiaGeopolitics++
+else topics.Other++
 
 })
 
-/ TIME SERIES */
+
+/* TIME SERIES */
 
 let mentionsByDay={}
 let russiaByDay={}
@@ -299,32 +322,98 @@ return total ? (r/total)*100 : 0
 })
 
 
-/ CHARTS /
+/* NARRATIVE MOMENTUM */
 
-new Chart(document.getElementById("mentionsChart").getContext("2d"),{
+let last3=dates.slice(-3)
+let prev3=dates.slice(-6,-3)
+
+let lastShare=0
+let prevShare=0
+
+last3.forEach(d=>{
+if(mentionsByDay[d])
+lastShare+=russiaByDay[d]/mentionsByDay[d]
+})
+
+prev3.forEach(d=>{
+if(mentionsByDay[d])
+prevShare+=russiaByDay[d]/mentionsByDay[d]
+})
+
+let momentum=((lastShare-prevShare)*100).toFixed(2)
+
+document.getElementById("momentum").innerText=momentum+"%"
+
+
+/* CHARTS */
+
+new Chart(document.getElementById("mentionsChart"),{
 type:"line",
 data:{labels:labels,datasets:[{data:mentionsValues,tension:0.3}]}
 })
 
-new Chart(document.getElementById("russiaTrendChart").getContext("2d"),{
+new Chart(document.getElementById("russiaTrendChart"),{
 type:"line",
 data:{labels:labels,datasets:[{data:russiaTrend,tension:0.3}]}
 })
 
-new Chart(document.getElementById("topicChart").getContext("2d"),{
+new Chart(document.getElementById("topicChart"),{
 type:"pie",
 data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 })
 
 const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
 
-new Chart(document.getElementById("sourceChart").getContext("2d"),{
+new Chart(document.getElementById("sourceChart"),{
 type:"bar",
 data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
 })
 
 
-/ NARRATIVE DRIVERS /
+/* GLOBAL MEDIA DISTRIBUTION */
+
+const regionMap={
+"United States":"North America",
+"Canada":"North America",
+"United Kingdom":"Europe",
+"France":"Europe",
+"Germany":"Europe",
+"Spain":"Europe",
+"Italy":"Europe",
+"Belgium":"Europe",
+"Russia":"Russia/CIS",
+"Ukraine":"Russia/CIS",
+"China":"Asia",
+"Japan":"Asia",
+"India":"Asia",
+"Singapore":"Asia",
+"Australia":"Asia"
+}
+
+let regionCounts={}
+
+articles.forEach(a=>{
+
+const country=a.sourcecountry||"Other"
+
+const region=regionMap[country]||"Other"
+
+if(!regionCounts[region]) regionCounts[region]=0
+
+regionCounts[region]++
+
+})
+
+new Chart(document.getElementById("regionChart"),{
+type:"bar",
+data:{
+labels:Object.keys(regionCounts),
+datasets:[{data:Object.values(regionCounts)}]
+}
+})
+
+
+/* NARRATIVE DRIVERS */
 
 const keywords=[
 "sanctions","frozen assets","russian assets",
@@ -358,7 +447,7 @@ driversDiv.appendChild(item)
 })
 
 
-/ NEWS /
+/* NEWS */
 
 const news=document.getElementById("news")
 
@@ -370,24 +459,7 @@ news.appendChild(item)
 })
 
 
-/ REGIONS */
-
-const regionMap={
-"United States":"US",
-"United Kingdom":"UK",
-"France":"Europe",
-"Germany":"Europe",
-"Spain":"Europe",
-"Italy":"Europe",
-"Belgium":"Europe",
-"Russia":"Russia/CIS",
-"Ukraine":"Russia/CIS",
-"India":"Asia",
-"China":"Asia",
-"Japan":"Asia",
-"Singapore":"Asia",
-"Australia":"Asia"
-}
+/* ARTICLES BY REGION */
 
 let regions={}
 
