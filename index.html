@@ -510,7 +510,13 @@ block.innerHTML="<h4>"+region+"</h4>"
 list.slice(0,5).forEach(a=>{
 let item=document.createElement("div")
 item.className="list-item"
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+let domain=(a.domain||"unknown")
+.replace("www.","")
+.replace("amp.","")
+
+item.innerHTML=
+"<strong>"+domain+"</strong> — "+
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 block.appendChild(item)
 })
 
