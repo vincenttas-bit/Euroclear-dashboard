@@ -24,8 +24,6 @@ margin-bottom:20px;
 color:#fff;
 }
 
-/* KPI STRIP /
-
 .kpi-strip{
 display:grid;
 grid-template-columns:repeat(3,1fr);
@@ -51,8 +49,6 @@ font-weight:600;
 margin-top:6px;
 }
 
-/ CHART GRID /
-
 .grid{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -74,13 +70,9 @@ font-weight:600;
 color:#dce3ea;
 }
 
-/ CHART SIZE /
-
 canvas{
 max-height:230px;
 }
-
-/ ANALYTICS /
 
 .analytics{
 display:grid;
@@ -246,6 +238,27 @@ articles.forEach(a=>{
 
 const text=(a.title||"").toLowerCase()
 
+/* DRIVER KEYWORDS */
+
+let keywords=[
+"sanctions",
+"frozen assets",
+"russian assets",
+"asset seizure",
+"litigation",
+"windfall",
+"digital assets",
+"blockchain",
+"settlement"
+]
+
+keywords.forEach(k=>{
+if(text.includes(k)){
+if(!drivers[k]) drivers[k]=0
+drivers[k]++
+}
+})
+
 if(text.includes("russia")){
 russia++
 topics.Russia++
@@ -266,8 +279,6 @@ let date=a.seendate.substring(0,8)
 
 if(!mentionsByDay[date]) mentionsByDay[date]=0
 mentionsByDay[date]++
-
-/ Narrative timeline tracking */
 
 if(text.includes("russia")){
 if(!narrativeTimeline.Russia[date]) narrativeTimeline.Russia[date]=0
@@ -336,14 +347,10 @@ const values=dates.map(d=>mentionsByDay[d])
 charts.forEach(c=>c.destroy())
 charts=[]
 
-/ Mentions trend /
-
 charts.push(new Chart(document.getElementById("mentionsChart"),{
 type:"line",
 data:{labels:dates,datasets:[{data:values,borderWidth:2}]}
 }))
-
-/ Narrative timeline /
 
 let narrativeDatasets=[]
 
@@ -363,21 +370,15 @@ type:"line",
 data:{labels:dates,datasets:narrativeDatasets}
 }))
 
-/ Topic chart /
-
 charts.push(new Chart(document.getElementById("topicChart"),{
 type:"pie",
 data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 }))
 
-/ Sentiment chart /
-
 charts.push(new Chart(document.getElementById("sentimentChart"),{
 type:"pie",
 data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
 }))
-
-/ Sources /
 
 const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
 
@@ -386,14 +387,24 @@ type:"bar",
 data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
 }))
 
-/ Regions /
-
 charts.push(new Chart(document.getElementById("regionChart"),{
 type:"pie",
 data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
 }))
 
-/ News feed /
+/ SHOW DRIVERS /
+
+Object.entries(drivers)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,8)
+.forEach(d=>{
+let item=document.createElement("div")
+item.className="list-item"
+item.innerText=d[0]+" ("+d[1]+")"
+driversDiv.appendChild(item)
+})
+
+/ NEWS /
 
 articles.slice(0,10).forEach(a=>{
 let item=document.createElement("div")
@@ -402,7 +413,7 @@ item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 newsDiv.appendChild(item)
 })
 
-/ Articles by region */
+/ REGION ARTICLES */
 
 Object.keys(regionArticles).forEach(region=>{
 if(regionArticles[region].length>0){
