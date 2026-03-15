@@ -3,25 +3,32 @@ export default async function handler(req, res) {
 try {
 
 const url =
-"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json"
 
 const response = await fetch(url, {
 headers: { "User-Agent": "Mozilla/5.0" }
 })
 
-const text = await response.text()
-const data = JSON.parse(text)
+const data = await response.json()
 
-const articles = data.articles || []
+const articles = Array.isArray(data.articles) ? data.articles : []
 
 let russia = 0
 let sources = {}
+let topics = {Russia:0, Regulation:0, Technology:0, Digital:0}
 
 articles.forEach(a => {
 
 const title = (a.title || "").toLowerCase()
 
-if (title.includes("russia")) russia++
+if (title.includes("russia")) {
+russia++
+topics.Russia++
+}
+
+if (title.includes("sanction")) topics.Regulation++
+if (title.includes("tech") || title.includes("technology")) topics.Technology++
+if (title.includes("digital") || title.includes("crypto")) topics.Digital++
 
 const domain = (a.domain || "unknown").replace("www.","")
 
@@ -30,18 +37,33 @@ sources[domain]++
 
 })
 
-const result = {
+res.status(200).json({
+
 total: articles.length,
+
 russiaShare: articles.length ? (russia / articles.length) * 100 : 0,
-sources: Object.keys(sources).length,
+
+sources: sources,
+
+topics: topics,
+
 articles: articles.slice(0,10)
-}
 
-res.status(200).json(result)
+})
 
-} catch (err) {
+} catch (error) {
 
-res.status(500).json({ error: "Failed to load news" })
+console.log("API ERROR:", error)
+
+res.status(200).json({
+
+total: 0,
+russiaShare: 0,
+sources: {},
+topics: {},
+articles: []
+
+})
 
 }
 
