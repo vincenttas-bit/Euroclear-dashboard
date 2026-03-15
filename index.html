@@ -2,121 +2,40 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Euroclear Geopolitical Intelligence Monitor</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<title>Euroclear Monitor</title>
 <style>
-
 body{
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
 background:#0b0f14;
 color:#e6edf3;
 padding:30px;
-max-width:1300px;
+max-width:900px;
 margin:auto;
 }
-
-h1{margin-bottom:20px;}
-
-.kpis{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:15px;
-margin-bottom:25px;
-}
-
 .kpi{
 background:#121821;
-padding:16px;
-border-radius:6px;
-border:1px solid #1f2a36;
-}
-
-.kpi-title{
-font-size:12px;
-color:#8b9bb0;
-}
-
-.kpi-value{
-font-size:28px;
-margin-top:6px;
-font-weight:600;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-bottom:20px;
-}
-
-.panel{
-background:#121821;
-border:1px solid #1f2a36;
-padding:18px;
+padding:15px;
+margin-bottom:10px;
 border-radius:6px;
 }
-
-canvas{
-max-height:240px;
-}
-
 .article{
 padding:6px 0;
 border-bottom:1px solid #1f2a36;
-font-size:13px;
 }
-
 a{color:#9cc7ff;text-decoration:none;}
-
 </style>
 </head>
 
 <body>
 
-<h1>Euroclear Geopolitical Intelligence Monitor</h1>
+<h1>Euroclear Geopolitical Monitor</h1>
 
-<div class="kpis">
+<div class="kpi">Total Articles: <span id="total">Loading</span></div>
+<div class="kpi">Russia Narrative Share: <span id="russia">Loading</span></div>
+<div class="kpi">Unique Sources: <span id="sources">Loading</span></div>
 
-<div class="kpi">
-<div class="kpi-title">Total Euroclear Articles</div>
-<div id="total" class="kpi-value">Loading</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-title">Russia Narrative Share</div>
-<div id="russiaShare" class="kpi-value">Loading</div>
-</div>
-
-<div class="kpi">
-<div class="kpi-title">Unique Sources</div>
-<div id="sourceCount" class="kpi-value">Loading</div>
-</div>
-
-</div>
-
-
-<div class="grid">
-
-<div class="panel">
-<h3>Topic Distribution</h3>
-<canvas id="topicChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Top Media Sources</h3>
-<canvas id="sourceChart"></canvas>
-</div>
-
-</div>
-
-
-<div class="panel">
-<h3>Latest Euroclear Coverage</h3>
+<h3>Latest Coverage</h3>
 <div id="news"></div>
-</div>
-
 
 <script>
 
@@ -125,92 +44,44 @@ async function load(){
 try{
 
 const res = await fetch("/api/news")
+
 const data = await res.json()
 
-/* SAFETY FALLBACKS /
+console.log("API DATA:", data)
 
-const total = data.total || 0
-const russiaShare = data.russiaShare || 0
-const sources = data.sources || {}
-const topics = data.topics || {}
-const articles = data.articles || []
+/* SAFE DEFAULTS /
+
+const total = data && data.total ? data.total : 0
+const russiaShare = data && data.russiaShare ? data.russiaShare : 0
+const sources = data && data.sources ? data.sources : {}
+const articles = data && data.articles ? data.articles : []
 
 / KPIs /
 
 document.getElementById("total").innerText = total
+document.getElementById("russia").innerText = russiaShare.toFixed(1) + "%"
+document.getElementById("sources").innerText = Object.keys(sources).length
 
-document.getElementById("russiaShare").innerText =
-Number(russiaShare).toFixed(1) + "%"
+/ ARTICLES */
 
-document.getElementById("sourceCount").innerText =
-Object.keys(sources).length
-
-
-/ TOPIC CHART /
-
-const topicLabels = Object.keys(topics)
-const topicValues = Object.values(topics)
-
-if(topicLabels.length){
-
-new Chart(document.getElementById("topicChart"),{
-
-type:"pie",
-
-data:{
-labels:topicLabels,
-datasets:[{data:topicValues}]
-}
-
-})
-
-}
-
-
-/ SOURCE CHART /
-
-const sortedSources =
-Object.entries(sources)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,6)
-
-if(sortedSources.length){
-
-new Chart(document.getElementById("sourceChart"),{
-
-type:"bar",
-
-data:{
-labels:sortedSources.map(s=>s[0]),
-datasets:[{data:sortedSources.map(s=>s[1])}]
-}
-
-})
-
-}
-
-
-/ NEWS */
-
-const news=document.getElementById("news")
+const news = document.getElementById("news")
 
 articles.forEach(a=>{
 
-let row=document.createElement("div")
+let div=document.createElement("div")
+div.className="article"
 
-row.className="article"
+div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
-row.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-
-news.appendChild(row)
+news.appendChild(div)
 
 })
 
-}catch(e){
+}catch(err){
 
-console.log(e)
+console.log("DASHBOARD ERROR:", err)
 
-document.getElementById("total").innerText="Dashboard error"
+document.getElementById("total").innerText="Error loading dashboard"
 
 }
 
