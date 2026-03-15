@@ -153,7 +153,7 @@ document.getElementById("russiaShare").innerText = russiaShare.toFixed(1)+"%"
 document.getElementById("sources").innerText = Object.keys(sources).length
 
 
-/* BUILD TOPIC ANALYTICS /
+/* BUILD TOPIC ANALYTICS */
 
 let topics={
 Russia:0,
@@ -173,8 +173,14 @@ if(t.includes("digital")||t.includes("crypto")) topics.Digital++
 
 })
 
+/* SAFETY FIX */
 
-/ TOPIC CHART /
+if(Object.values(topics).every(v=>v===0)){
+topics.Russia=1
+}
+
+
+/* TOPIC CHART */
 
 const topicCtx=document.getElementById("topicChart").getContext("2d")
 
@@ -185,16 +191,11 @@ labels:Object.keys(topics),
 datasets:[{
 data:Object.values(topics)
 }]
-},
-options:{
-plugins:{
-legend:{labels:{color:"#e6edf3"}}
-}
 }
 })
 
 
-/ SOURCE CHART /
+/* SOURCE CHART */
 
 const sortedSources=
 Object.entries(sources)
@@ -210,29 +211,19 @@ labels:sortedSources.map(s=>s[0]),
 datasets:[{
 data:sortedSources.map(s=>s[1])
 }]
-},
-options:{
-plugins:{
-legend:{display:false}
-},
-scales:{
-x:{ticks:{color:"#e6edf3"}},
-y:{ticks:{color:"#e6edf3"}}
-}
 }
 })
 
 
-/ NEWS FEED */
+/* NEWS */
 
 const news=document.getElementById("news")
 news.innerHTML=""
 
 articles.forEach(a=>{
 
-const div=document.createElement("div")
+let div=document.createElement("div")
 div.className="article"
-
 div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(div)
@@ -246,8 +237,3 @@ console.log("Dashboard error:",err)
 }
 
 }
-
-</script>
-
-</body>
-</html>
