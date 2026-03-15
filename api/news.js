@@ -3,32 +3,62 @@ export default async function handler(req, res) {
 try {
 
 const url =
-"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json&sort=datedesc"
+"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
 
 const response = await fetch(url, {
 headers: {
-"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+"User-Agent": "Mozilla/5.0",
 "Accept": "application/json"
 }
 })
 
-const text = await response.text()
-
-let data = {}
-
-try {
-data = JSON.parse(text)
-} catch {
-data = {}
-}
+const data = await response.json()
 
 const articles = Array.isArray(data.articles) ? data.articles : []
+
+/* trusted sources */
+
+const allowedSources = [
+"reuters.com",
+"bloomberg.com",
+"ft.com",
+"politico.com",
+"politico.eu",
+"economist.com",
+"wsj.com",
+"nytimes.com",
+"washingtonpost.com",
+"cnn.com",
+"bbc.com",
+"bbc.co.uk",
+"theguardian.com",
+"elpais.com",
+"lemonde.fr",
+"spiegel.de",
+"ansa.it",
+"nikkei.com",
+"scmp.com",
+"aljazeera.com",
+"arabnews.com",
+"tass.com",
+"kyivpost.com",
+"coindesk.com",
+"globalcustodian.com"
+]
+
+let filtered = articles.filter(a => {
+
+const domain = (a.domain || "").replace("www.","")
+
+return allowedSources.includes(domain)
+
+})
 
 let russia = 0
 let sources = {}
 let topics = {Russia:0, Regulation:0, Technology:0, Digital:0}
 
-articles.forEach(a => {
+filtered.forEach(a => {
 
 const title = (a.title || "").toLowerCase()
 
@@ -50,17 +80,17 @@ sources[domain]++
 
 res.status(200).json({
 
-total: articles.length,
+total: filtered.length,
 
-russiaShare: articles.length
-? (russia / articles.length) * 100
+russiaShare: filtered.length
+? (russia / filtered.length) * 100
 : 0,
 
 sources: sources,
 
 topics: topics,
 
-articles: articles.slice(0,10)
+articles: filtered.slice(0,10)
 
 })
 
