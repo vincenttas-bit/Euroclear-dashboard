@@ -1,4 +1,3 @@
-2"}
 <!DOCTYPE html>
 <html>
 <head>
@@ -69,10 +68,7 @@ border-bottom:1px solid #1f2a36;
 font-size:13px;
 }
 
-a{
-color:#9cc7ff;
-text-decoration:none;
-}
+a{color:#9cc7ff;text-decoration:none;}
 
 </style>
 </head>
@@ -117,11 +113,8 @@ text-decoration:none;
 
 
 <div class="panel">
-
 <h3>Latest Euroclear Coverage</h3>
-
 <div id="news"></div>
-
 </div>
 
 
@@ -134,37 +127,51 @@ try{
 const res = await fetch("/api/news")
 const data = await res.json()
 
-/* KPIs /
+/* SAFETY DEFAULTS /
 
-document.getElementById("total").innerText = data.total
+const total = data.total || 0
+const russiaShare = data.russiaShare || 0
+const sources = data.sources || {}
+const topics = data.topics || {}
+const articles = data.articles || []
+
+/ KPI /
+
+document.getElementById("total").innerText = total
 
 document.getElementById("russiaShare").innerText =
-data.russiaShare.toFixed(1)+"%"
+russiaShare.toFixed(1) + "%"
 
 document.getElementById("sourceCount").innerText =
-Object.keys(data.sources).length
+Object.keys(sources).length
 
 
 / TOPIC CHART /
+
+if(Object.keys(topics).length > 0){
 
 new Chart(document.getElementById("topicChart"),{
 
 type:"pie",
 
 data:{
-labels:Object.keys(data.topics),
-datasets:[{data:Object.values(data.topics)}]
+labels:Object.keys(topics),
+datasets:[{data:Object.values(topics)}]
 }
 
 })
+
+}
 
 
 / SOURCE CHART /
 
 const sortedSources =
-Object.entries(data.sources)
+Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,6)
+
+if(sortedSources.length > 0){
 
 new Chart(document.getElementById("sourceChart"),{
 
@@ -177,12 +184,14 @@ datasets:[{data:sortedSources.map(s=>s[1])}]
 
 })
 
+}
+
 
 / NEWS */
 
 const news=document.getElementById("news")
 
-data.articles.forEach(a=>{
+articles.forEach(a=>{
 
 let row=document.createElement("div")
 
@@ -207,4 +216,4 @@ load()
 </script>
 
 </body>
-</ht
+</html>
