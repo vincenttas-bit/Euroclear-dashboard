@@ -5,74 +5,50 @@
 <title>Euroclear Monitor</title>
 
 <style>
-
 body{
 font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
 background:#0b0f14;
 color:#e6edf3;
 padding:30px;
-max-width:1100px;
+max-width:900px;
 margin:auto;
 }
 
 h1{margin-bottom:20px;}
 
-.kpis{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:15px;
-margin-bottom:25px;
-}
-
-.box{
+.kpi{
 background:#121821;
 padding:15px;
 border-radius:6px;
-}
-
-.value{
-font-size:26px;
-margin-top:6px;
+margin-bottom:10px;
 }
 
 .article{
 padding:8px 0;
 border-bottom:1px solid #1f2a36;
-font-size:13px;
 }
 
-a{
-color:#9cc7ff;
-text-decoration:none;
-}
-
+a{color:#9cc7ff;text-decoration:none;}
 </style>
 </head>
 
 <body>
 
-<h1>Euroclear Geopolitical Monitor</h1>
+<h1>Euroclear Coverage Monitor</h1>
 
-<div class="kpis">
-
-<div class="box">
-Total Articles
-<div id="total" class="value">Loading</div>
+<div class="kpi">
+Total Articles: <span id="total">Loading</span>
 </div>
 
-<div class="box">
-Russia Share
-<div id="russia" class="value">Loading</div>
+<div class="kpi">
+Russia Narrative Share: <span id="russia">Loading</span>
 </div>
 
-<div class="box">
-Sources
-<div id="sources" class="value">Loading</div>
+<div class="kpi">
+Unique Sources: <span id="sources">Loading</span>
 </div>
 
-</div>
-
-<h3>Latest Coverage</h3>
+<h3>Latest Articles</h3>
 
 <div id="news"></div>
 
@@ -82,34 +58,32 @@ async function load(){
 
 try{
 
-const url="https://api.allorigins.win/raw?url=https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json"
+const url="https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=Euroclear"
 
 const res = await fetch(url)
 
 const data = await res.json()
 
-const articles = data.articles || []
+const articles = data.items || []
 
 document.getElementById("total").innerText = articles.length
 
-let russia=0
-let sources={}
+let russia = 0
+let sources = {}
 
-for(let i=0;i<articles.length;i++){
-
-let a=articles[i]
+articles.forEach(a=>{
 
 let title=(a.title||"").toLowerCase()
 
 if(title.includes("russia")) russia++
 
-let domain=(a.domain||"unknown").replace("www.","")
+let domain=new URL(a.link).hostname.replace("www.","")
 
 if(!sources[domain]) sources[domain]=0
 
 sources[domain]++
 
-}
+})
 
 document.getElementById("russia").innerText =
 articles.length?((russia/articles.length)*100).toFixed(1)+"%":"0%"
@@ -119,27 +93,27 @@ Object.keys(sources).length
 
 const news=document.getElementById("news")
 
-for(let i=0;i<articles.length && i<10;i++){
+articles.slice(0,10).forEach(a=>{
 
-let row=document.createElement("div")
+let div=document.createElement("div")
 
-row.className="article"
+div.className="article"
 
-row.innerHTML="<a href='"+articles[i].url+"' target='_blank'>"+articles[i].title+"</a>"
+div.innerHTML="<a href='"+a.link+"' target='_blank'>"+a.title+"</a>"
 
-news.appendChild(row)
+news.appendChild(div)
 
-}
+})
 
 }catch(e){
 
-document.getElementById("total").innerText="Error loading"
+document.getElementById("total").innerText="Error"
 
 }
 
 }
 
-setTimeout(load,300)
+load()
 
 </script>
 
