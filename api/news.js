@@ -26,8 +26,9 @@ const timeout=setTimeout(()=>controller.abort(),8000)
 
 const response=await fetch(url,{
 headers:{
-"User-Agent":"EuroclearMonitor/1.0",
-"Accept":"application/json"
+"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+"Accept":"application/json",
+"Referer":"https://www.google.com"
 },
 signal:controller.signal
 })
