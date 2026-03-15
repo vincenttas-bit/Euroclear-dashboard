@@ -493,7 +493,30 @@ labels:sortedRegions.map(r=>r[0]),
 datasets:[{data:sortedRegions.map(r=>r[1])}]
 }
 })
+/* LATEST EUROCLEAR COVERAGE */
 
+const news=document.getElementById("news")
+
+news.innerHTML=""
+
+articles.slice(0,10).forEach(a=>{
+
+if(!a || !a.title) return
+
+let domain=(a.domain||"unknown")
+.replace("www.","")
+.replace("amp.","")
+
+let item=document.createElement("div")
+item.className="list-item"
+
+item.innerHTML=
+"<strong>"+domain+"</strong> — "+
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
+news.appendChild(item)
+
+})
 /* ARTICLES BY REGION */
 
 const regionDiv=document.getElementById("regionArticles")
