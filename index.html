@@ -185,17 +185,19 @@ color:#9fb3c8;
 window.onload = load
 
 async function load(){
+let data = {}
 
 try{
+
 const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
-const data = await res.json()
+data = await res.json()
 
 }catch(e){
 
 console.log("API error",e)
 
 }
-let articles = data.articles || []
+
 const sources = data.sources || {}
 
 document.getElementById("total").innerText=data.total
