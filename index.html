@@ -127,7 +127,7 @@ try{
 const res = await fetch("/api/news")
 const data = await res.json()
 
-/* SAFETY DEFAULTS /
+/* SAFETY FALLBACKS /
 
 const total = data.total || 0
 const russiaShare = data.russiaShare || 0
@@ -135,12 +135,12 @@ const sources = data.sources || {}
 const topics = data.topics || {}
 const articles = data.articles || []
 
-/ KPI /
+/ KPIs /
 
 document.getElementById("total").innerText = total
 
 document.getElementById("russiaShare").innerText =
-russiaShare.toFixed(1) + "%"
+Number(russiaShare).toFixed(1) + "%"
 
 document.getElementById("sourceCount").innerText =
 Object.keys(sources).length
@@ -148,15 +148,18 @@ Object.keys(sources).length
 
 / TOPIC CHART /
 
-if(Object.keys(topics).length > 0){
+const topicLabels = Object.keys(topics)
+const topicValues = Object.values(topics)
+
+if(topicLabels.length){
 
 new Chart(document.getElementById("topicChart"),{
 
 type:"pie",
 
 data:{
-labels:Object.keys(topics),
-datasets:[{data:Object.values(topics)}]
+labels:topicLabels,
+datasets:[{data:topicValues}]
 }
 
 })
@@ -171,7 +174,7 @@ Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,6)
 
-if(sortedSources.length > 0){
+if(sortedSources.length){
 
 new Chart(document.getElementById("sourceChart"),{
 
@@ -205,7 +208,9 @@ news.appendChild(row)
 
 }catch(e){
 
-document.getElementById("total").innerText="API error"
+console.log(e)
+
+document.getElementById("total").innerText="Dashboard error"
 
 }
 
