@@ -490,7 +490,11 @@ new Chart(document.getElementById("regionChart"),{
 type:"bar",
 data:{
 labels:sortedRegions.map(r=>r[0]),
-datasets:[{data:sortedRegions.map(r=>r[
+datasets:[{
+data:sortedRegions.map(r=>r[1])
+}]
+}
+})
  /* LATEST EUROCLEAR COVERAGE */
 
 const news=document.getElementById("news")
