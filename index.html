@@ -546,10 +546,12 @@ let domain=(a.domain||"unknown")
 let item=document.createElement("div")
 item.className="list-item"
 
-item.innerHTML=
-"<strong>"+domain+"</strong> — "+
-"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+let link = a.url
+ ? "<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+ : a.title
 
+item.innerHTML =
+"<strong>"+domain+"</strong> — " + link
 block.appendChild(item)
 
 })
