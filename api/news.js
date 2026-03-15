@@ -3,6 +3,8 @@ let lastFetch=0
 
 export default async function handler(req,res){
 
+res.setHeader("Cache-Control","no-store")   // prevent Vercel edge caching
+
 try{
 
 const now=Date.now()
@@ -10,8 +12,7 @@ const now=Date.now()
 /* CACHE FOR 1 HOUR */
 
 if(cache && (now-lastFetch)<3600000){
-res.status(200).json(cache)
-return
+return res.status(200).json(cache)
 }
 
 /* IMPROVED QUERY */
@@ -25,7 +26,7 @@ const timeout=setTimeout(()=>controller.abort(),8000)
 
 const response=await fetch(url,{
 headers:{
-"User-Agent":"Mozilla/5.0",
+"User-Agent":"EuroclearMonitor/1.0",
 "Accept":"application/json"
 },
 signal:controller.signal
@@ -33,9 +34,21 @@ signal:controller.signal
 
 clearTimeout(timeout)
 
+/* CHECK RESPONSE */
+
+if(!response.ok){
+throw new Error("GDELT request failed")
+}
+
 const data=await response.json()
 
-let articles=Array.isArray(data.articles)?data.articles:[]
+/* VALIDATE ARTICLES */
+
+if(!data.articles || !Array.isArray(data.articles)){
+throw new Error("Invalid GDELT response")
+}
+
+let articles=data.articles
 
 /* REMOVE DUPLICATE TITLES + DOMAIN */
 
@@ -133,24 +146,31 @@ topics:topics,
 articles:articles.slice(0,100)
 }
 
+/* ONLY CACHE VALID RESULTS */
+
+if(result.total>0){
 cache=result
 lastFetch=now
+}
 
-res.status(200).json(result)
+return res.status(200).json(result)
 
 }catch(err){
 
+console.error("API ERROR:",err)
+
+/* FALLBACK TO CACHE */
+
 if(cache){
-res.status(200).json(cache)
-}else{
-res.status(200).json({
-total:0,
-russiaShare:0,
-sources:{},
-topics:{},
-articles:[]
-})
+return res.status(200).json(cache)
 }
+
+/* RETURN ERROR IF NO CACHE */
+
+return res.status(500).json({
+error:"API failure",
+message:err.message
+})
 
 }
 
