@@ -47,6 +47,7 @@ padding:6px 0;
 border-bottom:1px solid #1f2a36;
 font-size:13px;
 }
+
 </style>
 </head>
 
@@ -80,7 +81,13 @@ Unique Sources
 
 <script>
 
-async function load(){
+document.addEventListener("DOMContentLoaded", start)
+
+function start(){
+setTimeout(loadData,300)
+}
+
+async function loadData(){
 
 try{
 
@@ -88,13 +95,23 @@ const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtL
 
 const response = await fetch(url)
 
-if(!response.ok){
-throw new Error("API failed")
-}
-
 const data = await response.json()
 
 const articles = data && data.articles ? data.articles : []
+
+updateDashboard(articles)
+
+}catch(e){
+
+document.getElementById("total").innerText="Error"
+
+console.log(e)
+
+}
+
+}
+
+function updateDashboard(articles){
 
 document.getElementById("total").innerText = articles.length
 
@@ -129,12 +146,18 @@ mentions[d]++
 }
 
 document.getElementById("russia").innerText =
-articles.length ? ((russia/articles.length)100).toFixed(1)+"%" : "0%"
+articles.length ? ((russia/articles.length)*100).toFixed(1)+"%" : "0%"
 
 document.getElementById("sources").innerText =
 Object.keys(sources).length
 
-/ chart /
+renderChart(mentions)
+
+renderNews(articles)
+
+}
+
+function renderChart(mentions){
 
 let labels=Object.keys(mentions).sort()
 
@@ -144,15 +167,24 @@ for(let i=0;i<labels.length;i++){
 values.push(mentions[labels[i]])
 }
 
+if(labels.length>0){
+
 new Chart(document.getElementById("chart"),{
 type:"line",
 data:{
 labels:labels,
-datasets:[{data:values,borderWidth:2}]
+datasets:[{
+data:values,
+borderWidth:2
+}]
 }
 })
 
-/ news */
+}
+
+}
+
+function renderNews(articles){
 
 const news=document.getElementById("news")
 
@@ -168,15 +200,7 @@ news.appendChild(row)
 
 }
 
-}catch(err){
-
-document.getElementById("total").innerText="Error"
-
 }
-
-}
-
-setTimeout(load,200)
 
 </script>
 
