@@ -108,7 +108,6 @@ text-decoration:none;
 
 </div>
 
-
 <div class="grid">
 
 <div class="panel">
@@ -133,12 +132,10 @@ text-decoration:none;
 
 </div>
 
-
 <div class="panel">
 <h3>Latest Euroclear Coverage</h3>
 <div id="news"></div>
 </div>
-
 
 <script>
 
@@ -149,20 +146,26 @@ async function loadNews(){
 try{
 
 const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
+
+if(!res.ok){
+throw new Error("API request failed")
+}
+
 const data = await res.json()
-const articles = data.articles || []
+
+const articles = Array.isArray(data.articles) ? data.articles : []
 
 /* KPI calculation /
 
-let russia=0
-let sources={}
-let topics={Russia:0,Regulation:0,Technology:0,"Digital Assets":0}
-let sentiment={Positive:0,Neutral:0,Negative:0}
-let mentionsByDay={}
+let russia = 0
+let sources = {}
+let topics = {Russia:0,Regulation:0,Technology:0,"Digital Assets":0}
+let sentiment = {Positive:0,Neutral:0,Negative:0}
+let mentionsByDay = {}
 
 articles.forEach(a=>{
 
-const title=(a.title||"").toLowerCase()
+const title = (a.title || "").toLowerCase()
 
 if(title.includes("russia")){
 russia++
@@ -170,50 +173,56 @@ topics.Russia++
 }
 
 if(title.includes("sanction")) topics.Regulation++
-if(title.includes("tech")||title.includes("technology")) topics.Technology++
-if(title.includes("digital")||title.includes("crypto")) topics["Digital Assets"]++
+if(title.includes("tech") || title.includes("technology")) topics.Technology++
+if(title.includes("digital") || title.includes("crypto")) topics["Digital Assets"]++
 
-if(title.includes("profit")||title.includes("growth")) sentiment.Positive++
-else if(title.includes("sanction")||title.includes("freeze")) sentiment.Negative++
+if(title.includes("profit") || title.includes("growth")) sentiment.Positive++
+else if(title.includes("sanction") || title.includes("freeze")) sentiment.Negative++
 else sentiment.Neutral++
 
 if(a.seendate){
 
-let date=a.seendate.substring(0,8)
+let date = a.seendate.substring(0,8)
 
-if(!mentionsByDay[date]) mentionsByDay[date]=0
+if(!mentionsByDay[date]) mentionsByDay[date] = 0
 mentionsByDay[date]++
 
 }
 
-let source=(a.domain||"").replace("www.","")
+let source = (a.domain || "").replace("www.","")
 
-if(!sources[source]) sources[source]=0
+if(!sources[source]) sources[source] = 0
 sources[source]++
 
 })
 
-/ KPI display */
+/ KPI display /
 
-document.getElementById("total").innerText=articles.length
+document.getElementById("total").innerText = articles.length
 
-document.getElementById("russiaShare").innerText=
-((russia/articles.length)100).toFixed(1)+"%"
+if(articles.length > 0){
 
-document.getElementById("sources").innerText=
+document.getElementById("russiaShare").innerText =
+((russia / articles.length) * 100).toFixed(1) + "%"
+
+}else{
+
+document.getElementById("russiaShare").innerText = "0%"
+
+}
+
+document.getElementById("sources").innerText =
 Object.keys(sources).length
-
 
 / mentions timeline /
 
-const dates=Object.keys(mentionsByDay).sort()
-const values=dates.map(d=>mentionsByDay[d])
+const dates = Object.keys(mentionsByDay).sort()
+const values = dates.map(d=>mentionsByDay[d])
 
 new Chart(document.getElementById("mentionsChart"),{
 type:"line",
 data:{labels:dates,datasets:[{data:values,borderWidth:2}]}
 })
-
 
 / topic chart /
 
@@ -222,18 +231,16 @@ type:"pie",
 data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 })
 
-
-/ sentiment /
+/ sentiment chart /
 
 new Chart(document.getElementById("sentimentChart"),{
 type:"pie",
 data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
 })
 
+/ source chart /
 
-/ sources /
-
-const sortedSources=
+const sortedSources =
 Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
 
 new Chart(document.getElementById("sourceChart"),{
@@ -244,17 +251,17 @@ datasets:[{data:sortedSources.map(s=>s[1])}]
 }
 })
 
-
 / news list */
 
-const news=document.getElementById("news")
+const news = document.getElementById("news")
 
 articles.slice(0,10).forEach(a=>{
 
-let div=document.createElement("div")
-div.className="list-item"
+let div = document.createElement("div")
+div.className = "list-item"
 
-div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+div.innerHTML =
+"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(div)
 
@@ -264,7 +271,7 @@ news.appendChild(div)
 
 console.error(e)
 
-document.getElementById("total").innerText="API error"
+document.getElementById("total").innerText = "API error"
 
 }
 
