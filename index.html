@@ -501,18 +501,21 @@ news.innerHTML=""
 
 articles.slice(0,10).forEach(a=>{
 
-if(!a || !a.title || !a.url) return
+if(!a || !a.title) return
 
 let domain=(a.domain||"unknown")
 .replace("www.","")
 .replace("amp.","")
 
+let link = a.url
+? "<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+: a.title
+
 let item=document.createElement("div")
 item.className="list-item"
 
-item.innerHTML=
-"<strong>"+domain+"</strong> — "+
-"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+item.innerHTML =
+"<strong>"+domain+"</strong> — " + link
 
 news.appendChild(item)
 
