@@ -145,19 +145,37 @@ const data = await res.json()
 const total = data.total || 0
 const russiaShare = data.russiaShare || 0
 const sources = data.sources || {}
-const topics = data.topics || {}
 const articles = data.articles || []
 
 document.getElementById("total").innerText = total
-document.getElementById("russiaShare").innerText = Number(russiaShare).toFixed(1) + "%"
+document.getElementById("russiaShare").innerText = russiaShare.toFixed(1) + "%"
 document.getElementById("sources").innerText = Object.keys(sources).length
 
 
-/* TOPIC CHART /
+/* COMPUTE TOPICS FROM ARTICLES /
 
-if(Object.values(topics).some(v=>v>0)){
+let topics={
+Russia:0,
+Regulation:0,
+Technology:0,
+Digital:0
+}
 
-const ctx1 = document.getElementById("topicChart").getContext("2d")
+articles.forEach(a=>{
+
+let t=(a.title||"").toLowerCase()
+
+if(t.includes("russia")) topics.Russia++
+if(t.includes("sanction")) topics.Regulation++
+if(t.includes("tech")||t.includes("technology")) topics.Technology++
+if(t.includes("digital")||t.includes("crypto")) topics.Digital++
+
+})
+
+
+/ TOPIC CHART /
+
+const ctx1=document.getElementById("topicChart").getContext("2d")
 
 new Chart(ctx1,{
 type:"pie",
@@ -169,19 +187,15 @@ data:Object.values(topics)
 }
 })
 
-}
-
 
 / SOURCE CHART /
 
-const sortedSources =
+const sortedSources=
 Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,6)
 
-if(sortedSources.length){
-
-const ctx2 = document.getElementById("sourceChart").getContext("2d")
+const ctx2=document.getElementById("sourceChart").getContext("2d")
 
 new Chart(ctx2,{
 type:"bar",
@@ -193,8 +207,6 @@ data:sortedSources.map(s=>s[1])
 }
 })
 
-}
-
 
 / NEWS FEED */
 
@@ -205,7 +217,6 @@ news.innerHTML=""
 articles.forEach(a=>{
 
 let div=document.createElement("div")
-
 div.className="article"
 
 div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
