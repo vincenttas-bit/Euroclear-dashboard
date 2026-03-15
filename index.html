@@ -1,3 +1,4 @@
+1"}
 <!DOCTYPE html>
 <html>
 <head>
@@ -131,51 +132,26 @@ text-decoration:none;
 </div>
 
 
-
 <script>
 
 async function load(){
 
-const res = await fetch("https://euroclear-dashboard.vercel.app/api/news")
+const res=await fetch("https://euroclear-dashboard.vercel.app/api/news")
 
-const data = await res.json()
+const data=await res.json()
 
-const total = data.total || 0
-const russiaShare = data.russiaShare || 0
-const sources = data.sources || {}
-const articles = data.articles || []
+const total=data.total||0
+const russiaShare=data.russiaShare||0
+const sources=data.sources||{}
+const topics=data.topics||{}
+const articles=data.articles||[]
 
-document.getElementById("total").innerText = total
-
-document.getElementById("russiaShare").innerText =
-Number(russiaShare).toFixed(1) + "%"
-
-document.getElementById("sources").innerText =
-Object.keys(sources).length
+document.getElementById("total").innerText=total
+document.getElementById("russiaShare").innerText=russiaShare.toFixed(1)+"%"
+document.getElementById("sources").innerText=Object.keys(sources).length
 
 
-/* TOPIC ANALYSIS /
-
-let topics={
-Russia:0,
-Regulation:0,
-Technology:0,
-Digital:0
-}
-
-articles.forEach(a=>{
-
-let t=(a.title||"").toLowerCase()
-
-if(t.includes("russia")) topics.Russia++
-if(t.includes("sanction")) topics.Regulation++
-if(t.includes("tech")) topics.Technology++
-if(t.includes("digital")||t.includes("crypto")) topics.Digital++
-
-})
-
-
-/ TOPIC CHART /
+/* TOPIC CHART /
 
 if(Object.values(topics).some(v=>v>0)){
 
@@ -195,17 +171,14 @@ data:Object.values(topics)
 }
 
 
-/ SOURCE ANALYSIS /
+/ SOURCE CHART /
 
-const sortedSources =
+const sortedSources=
 Object.entries(sources)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,6)
 
-
-/ SOURCE CHART /
-
-if(sortedSources.length>0){
+if(sortedSources.length){
 
 new Chart(document.getElementById("sourceChart"),{
 
@@ -225,18 +198,17 @@ data:sortedSources.map(s=>s[1])
 
 / NEWS FEED */
 
-const news = document.getElementById("news")
+const news=document.getElementById("news")
 
 news.innerHTML=""
 
 articles.forEach(a=>{
 
-let div = document.createElement("div")
+let div=document.createElement("div")
 
 div.className="article"
 
-div.innerHTML =
-"<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+div.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
 
 news.appendChild(div)
 
@@ -249,4 +221,4 @@ load()
 </script>
 
 </body>
-</html>
+</ht
