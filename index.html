@@ -424,14 +424,15 @@ const keywords=[
 let drivers={}
 
 articles.forEach(a=>{
-const t=(a.title||"").toLowerCase()
+
+const text=((a.title||"")+" "+(a.snippet||"")).toLowerCase()
 
 keywords.forEach(k=>{
-if(t.includes(k)){
-if(!drivers[k]) drivers[k]=0
-drivers[k]++
+if(text.includes(k)){
+drivers[k]=(drivers[k]||0)+1
 }
 })
+
 })
 
 const driversDiv=document.getElementById("drivers")
