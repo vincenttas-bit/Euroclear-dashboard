@@ -24,7 +24,23 @@ data = JSON.parse(text)
 data = {}
 }
 
-const articles = Array.isArray(data.articles) ? data.articles : []
+let articles = Array.isArray(data.articles) ? data.articles : []
+
+/* remove duplicate titles */
+
+const seen = new Set()
+
+articles = articles.filter(a => {
+
+const title = (a.title || "").toLowerCase()
+
+if (seen.has(title)) return false
+
+seen.add(title)
+
+return true
+
+})
 
 let russia = 0
 let sources = {}
