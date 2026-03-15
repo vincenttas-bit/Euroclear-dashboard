@@ -501,7 +501,7 @@ news.innerHTML=""
 
 articles.slice(0,10).forEach(a=>{
 
-if(!a || !a.title) return
+if(!a || !a.title || !a.url) return
 
 let domain=(a.domain||"unknown")
 .replace("www.","")
