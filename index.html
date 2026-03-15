@@ -1,194 +1,57 @@
+3"}
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Euroclear Geopolitical Intelligence Monitor</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Euroclear Dashboard Test</title>
 
 <style>
-
 body{
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+font-family:Arial;
 background:#0b0f14;
-color:#e6edf3;
-margin:0;
-padding:30px;
-max-width:1500px;
-margin:auto;
+color:white;
+padding:40px;
 }
 
-h1{
-font-weight:600;
-margin-bottom:20px;
-color:#fff;
-}
-
-.kpi-strip{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:14px;
-margin-bottom:22px;
-}
-
-.kpi{
+.box{
 background:#121821;
-padding:16px;
-border-radius:6px;
-border:1px solid #1f2a36;
-}
-
-.kpi-title{
-font-size:12px;
-color:#8b9bb0;
-}
-
-.kpi-value{
-font-size:30px;
-font-weight:600;
-margin-top:6px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
+padding:20px;
 margin-bottom:20px;
-}
-
-.panel{
-background:#121821;
-border:1px solid #1f2a36;
 border-radius:6px;
-padding:18px;
 }
 
-.panel h3{
-margin-top:0;
-font-size:14px;
-font-weight:600;
-color:#dce3ea;
+.value{
+font-size:32px;
+margin-top:10px;
 }
-
-canvas{
-max-height:230px;
-}
-
-.analytics{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:18px;
-margin-bottom:20px;
-}
-
-.list-item{
-padding:6px 0;
-border-bottom:1px solid #1d2630;
-font-size:13px;
-}
-
-a{
-color:#9cc7ff;
-text-decoration:none;
-}
-
-.region-block{
-margin-top:12px;
-}
-
-.region-block h4{
-margin-bottom:6px;
-font-size:13px;
-color:#9fb3c8;
-}
-
 </style>
 </head>
 
 <body>
 
-<h1>Euroclear Geopolitical Intelligence Monitor</h1>
+<h1>Euroclear API Test</h1>
 
-<div class="kpi-strip">
-
-<div class="kpi">
-<div class="kpi-title">Total Euroclear Articles</div>
-<div id="total" class="kpi-value">Loading</div>
+<div class="box">
+Total Articles
+<div id="total" class="value">Loading</div>
 </div>
 
-<div class="kpi">
-<div class="kpi-title">Russia Narrative Share</div>
-<div id="russiaShare" class="kpi-value">Loading</div>
+<div class="box">
+Russia Narrative Share
+<div id="russiaShare" class="value">Loading</div>
 </div>
 
-<div class="kpi">
-<div class="kpi-title">Unique Sources</div>
-<div id="sourceCount" class="kpi-value">Loading</div>
+<div class="box">
+Unique Sources
+<div id="sources" class="value">Loading</div>
 </div>
 
-</div>
-
-
-<div class="grid">
-
-<div class="panel">
-<h3>Euroclear Mentions Trend</h3>
-<canvas id="mentionsChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Narrative Timeline</h3>
-<canvas id="narrativeChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Topic Distribution</h3>
-<canvas id="topicChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Sentiment Analysis</h3>
-<canvas id="sentimentChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Top Media Sources</h3>
-<canvas id="sourceChart"></canvas>
-</div>
-
-<div class="panel">
-<h3>Media Coverage by Region</h3>
-<canvas id="regionChart"></canvas>
-</div>
-
-</div>
-
-
-<div class="analytics">
-
-<div class="panel">
-<h3>Narrative Drivers</h3>
-<div id="drivers"></div>
-</div>
-
-<div class="panel">
-<h3>Latest Euroclear Coverage</h3>
+<div class="box">
+Latest Headlines
 <div id="news"></div>
 </div>
 
-</div>
-
-
-<div class="panel">
-<h3>Articles by Region</h3>
-<div id="regionArticles"></div>
-</div>
-
-
 <script>
-
-Chart.defaults.animation=false
-let charts=[]
 
 async function loadNews(){
 
@@ -196,235 +59,44 @@ try{
 
 const res = await fetch("/api/news")
 
-if(!res.ok){
-throw new Error("API error")
-}
-
 const data = await res.json()
 
 const articles = data.articles || []
 
-document.getElementById("total").innerText=articles.length
+document.getElementById("total").innerText = articles.length
 
-let russia=0
-
-let topics={Russia:0,Regulation:0,Technology:0,"Digital Assets":0}
-let sentiment={Positive:0,Neutral:0,Negative:0}
-
-let mentionsByDay={}
-let sources={}
-let regions={}
-let drivers={}
-
-let narrativeTimeline={
-Russia:{},
-Sanctions:{},
-Litigation:{},
-"Frozen Assets":{},
-"Windfall Profit":{}
-}
-
-let regionArticles={}
-
-const newsDiv=document.getElementById("news")
-const driversDiv=document.getElementById("drivers")
-const regionArticlesDiv=document.getElementById("regionArticles")
-
-newsDiv.innerHTML=""
-driversDiv.innerHTML=""
-regionArticlesDiv.innerHTML=""
+let russia = 0
+let sources = {}
 
 articles.forEach(a=>{
 
 const text=(a.title||"").toLowerCase()
 
-/* narrative drivers /
-
-let keywords=[
-"sanctions",
-"frozen assets",
-"russian assets",
-"asset seizure",
-"litigation",
-"windfall",
-"digital assets",
-"blockchain",
-"settlement"
-]
-
-keywords.forEach(k=>{
-if(text.includes(k)){
-if(!drivers[k]) drivers[k]=0
-drivers[k]++
-}
-})
-
-if(text.includes("russia")){
-russia++
-topics.Russia++
-}
-
-if(text.includes("sanction")||text.includes("eu")) topics.Regulation++
-if(text.includes("technology")||text.includes("tech")) topics.Technology++
-if(text.includes("digital")||text.includes("crypto")||text.includes("blockchain"))
-topics["Digital Assets"]++
-
-if(text.includes("profit")||text.includes("growth")) sentiment.Positive++
-else if(text.includes("sanction")||text.includes("freeze")||text.includes("lawsuit")) sentiment.Negative++
-else sentiment.Neutral++
-
-if(a.seendate){
-
-let date=a.seendate.substring(0,8)
-
-if(!mentionsByDay[date]) mentionsByDay[date]=0
-mentionsByDay[date]++
-
-/ narrative timeline */
-
-if(text.includes("russia")){
-if(!narrativeTimeline.Russia[date]) narrativeTimeline.Russia[date]=0
-narrativeTimeline.Russia[date]++
-}
-
-if(text.includes("sanction")){
-if(!narrativeTimeline.Sanctions[date]) narrativeTimeline.Sanctions[date]=0
-narrativeTimeline.Sanctions[date]++
-}
-
-if(text.includes("litigation")||text.includes("lawsuit")){
-if(!narrativeTimeline.Litigation[date]) narrativeTimeline.Litigation[date]=0
-narrativeTimeline.Litigation[date]++
-}
-
-if(text.includes("frozen")){
-if(!narrativeTimeline["Frozen Assets"][date]) narrativeTimeline["Frozen Assets"][date]=0
-narrativeTimeline["Frozen Assets"][date]++
-}
-
-if(text.includes("windfall")){
-if(!narrativeTimeline["Windfall Profit"][date]) narrativeTimeline["Windfall Profit"][date]=0
-narrativeTimeline["Windfall Profit"][date]++
-}
-
-}
+if(text.includes("russia")) russia++
 
 let source=(a.domain||"").replace("www.","")
-
-let allowedSources=[
-"reuters.com","bloomberg.com","ft.com","politico.com","politico.eu",
-"economist.com","wsj.com",
-"nytimes.com","washingtonpost.com","cnn.com",
-"bbc.com","bbc.co.uk","theguardian.com",
-"elpais.com","lemonde.fr","spiegel.de","ansa.it",
-"nikkei.com","scmp.com"
-]
-
-if(allowedSources.includes(source)){
 
 if(!sources[source]) sources[source]=0
 sources[source]++
 
-let region="Europe"
-
-if(["nytimes.com","washingtonpost.com","cnn.com"].includes(source)) region="US"
-if(["bbc.com","bbc.co.uk","theguardian.com"].includes(source)) region="UK"
-if(["nikkei.com","scmp.com"].includes(source)) region="Asia"
-
-if(!regions[region]) regions[region]=0
-regions[region]++
-
-if(!regionArticles[region]) regionArticles[region]=[]
-regionArticles[region].push(a)
-
-}
-
 })
 
-document.getElementById("russiaShare").innerText=((russia/articles.length)*100).toFixed(1)+"%"
-document.getElementById("sourceCount").innerText=Object.keys(sources).length
+document.getElementById("russiaShare").innerText =
+((russia/articles.length)*100).toFixed(1)+"%"
 
-const dates=Object.keys(mentionsByDay).sort()
-const values=dates.map(d=>mentionsByDay[d])
+document.getElementById("sources").innerText =
+Object.keys(sources).length
 
-charts.forEach(c=>c.destroy())
-charts=[]
-
-charts.push(new Chart(document.getElementById("mentionsChart"),{
-type:"line",
-data:{labels:dates,datasets:[{data:values,borderWidth:2}]}
-}))
-
-let narrativeDatasets=[]
-
-Object.keys(narrativeTimeline).forEach(name=>{
-const series=dates.map(d=>narrativeTimeline[name][d]||0)
-
-narrativeDatasets.push({
-label:name,
-data:series,
-fill:false,
-tension:0.3
-})
-})
-
-charts.push(new Chart(document.getElementById("narrativeChart"),{
-type:"line",
-data:{labels:dates,datasets:narrativeDatasets}
-}))
-
-charts.push(new Chart(document.getElementById("topicChart"),{
-type:"pie",
-data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
-}))
-
-charts.push(new Chart(document.getElementById("sentimentChart"),{
-type:"pie",
-data:{labels:Object.keys(sentiment),datasets:[{data:Object.values(sentiment)}]}
-}))
-
-const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
-
-charts.push(new Chart(document.getElementById("sourceChart"),{
-type:"bar",
-data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1])}]}
-}))
-
-charts.push(new Chart(document.getElementById("regionChart"),{
-type:"pie",
-data:{labels:Object.keys(regions),datasets:[{data:Object.values(regions)}]}
-}))
-
-Object.entries(drivers)
-.sort((a,b)=>b[1]-a[1])
-.slice(0,8)
-.forEach(d=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerText=d[0]+" ("+d[1]+")"
-driversDiv.appendChild(item)
-})
+const news=document.getElementById("news")
 
 articles.slice(0,10).forEach(a=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-newsDiv.appendChild(item)
-})
 
-Object.keys(regionArticles).forEach(region=>{
-let block=document.createElement("div")
-block.className="region-block"
-block.innerHTML="<h4>"+region+"</h4>"
+let div=document.createElement("div")
 
-regionArticles[region].slice(0,5).forEach(a=>{
-let item=document.createElement("div")
-item.className="list-item"
-item.innerHTML="<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
-block.appendChild(item)
-})
+div.innerHTML="<p>"+a.title+"</p>"
 
-regionArticlesDiv.appendChild(block)
+news.appendChild(div)
+
 })
 
 }catch(e){
@@ -432,8 +104,6 @@ regionArticlesDiv.appendChild(block)
 console.error(e)
 
 document.getElementById("total").innerText="API error"
-document.getElementById("russiaShare").innerText="-"
-document.getElementById("sourceCount").innerText="-"
 
 }
 
@@ -441,9 +111,7 @@ document.getElementById("sourceCount").innerText="-"
 
 loadNews()
 
-setInterval(loadNews,3600000)
-
 </script>
 
 </body>
-</html>
+</ht
