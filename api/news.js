@@ -198,7 +198,9 @@ let domain=(a.domain||"unknown")
 
 /* FILTER NON-TRUSTED SOURCES */
 
-if(!trustedMedia.includes(domain)){
+const trusted = trustedMedia.some(m => domain.endsWith(m))
+
+if(!trusted){
 return
 }
 
