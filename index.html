@@ -264,7 +264,7 @@ const mentionsValues=dates.map(d=>mentionsByDay[d])
 const russiaTrend=dates.map(d=>{
 let total=mentionsByDay[d]
 let r=russiaByDay[d]
-return total?(r/total)100:0
+return total ? (r/total)*100 : 0
 })
 
 
