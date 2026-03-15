@@ -533,45 +533,39 @@ news.appendChild(item)
 
 /* ARTICLES BY REGION */
 
-let domain=(a.domain||"")
-.replace("www.","")
-.replace("amp.","")
-.toLowerCase()
-
-let region=mediaRegionMap[domain]
-
-if(!region){
-
-const country=a.sourcecountry||"Other"
-region=regionMap[country]||"Other"
-
-}
-
 const regionDiv=document.getElementById("regionArticles")
 
-Object.entries(regions).forEach(([region,list])=>{
+regionDiv.innerHTML=""   // clear old content
+
+Object.entries(regions)
+.sort((a,b)=>b[1].length-a[1].length)
+.forEach(([region,list])=>{
 
 let block=document.createElement("div")
 block.className="region-block"
-block.innerHTML="<h4>"+region+"</h4>"
+
+block.innerHTML="<h4>"+region+" ("+list.length+")</h4>"
 
 list.slice(0,5).forEach(a=>{
-let item=document.createElement("div")
-item.className="list-item"
+
 let domain=(a.domain||"unknown")
 .replace("www.","")
 .replace("amp.","")
 
+let item=document.createElement("div")
+item.className="list-item"
+
 item.innerHTML=
 "<strong>"+domain+"</strong> — "+
 "<a href='"+a.url+"' target='_blank'>"+a.title+"</a>"
+
 block.appendChild(item)
+
 })
 
 regionDiv.appendChild(block)
 
 })
-
 }
 
 </script>
