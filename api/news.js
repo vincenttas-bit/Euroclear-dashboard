@@ -14,7 +14,9 @@ res.status(200).json(cache)
 return
 }
 
-const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
+/* IMPROVED QUERY */
+
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear%20OR%20%22Euroclear%20Bank%22&mode=ArtList&maxrecords=100&format=json&sort=datedesc"
 
 const response=await fetch(url,{
 headers:{
@@ -27,15 +29,20 @@ const data=await response.json()
 
 let articles=Array.isArray(data.articles)?data.articles:[]
 
-/* REMOVE DUPLICATE TITLES */
+/* REMOVE DUPLICATE TITLES + DOMAIN */
 
 const seen=new Set()
 
 articles=articles.filter(a=>{
+
 const title=(a.title||"").toLowerCase()
-if(seen.has(title)) return false
-seen.add(title)
+const domain=(a.domain||"")
+const key=title+"_"+domain
+
+if(seen.has(key)) return false
+seen.add(key)
 return true
+
 })
 
 let russia=0
@@ -44,21 +51,33 @@ let topics={
 Russia:0,
 Regulation:0,
 Technology:0,
-Digital:0
+Digital:0,
+Other:0
 }
 
 articles.forEach(a=>{
 
 const title=(a.title||"").toLowerCase()
 
-if(title.includes("russia")){
-russia++
+/* TOPIC PRIORITY */
+
+if(/sanction|freeze|frozen|seizure|confiscation/i.test(title)){
+topics.Regulation++
+}else if(/digital|crypto|blockchain/i.test(title)){
+topics.Digital++
+}else if(/tech|technology|platform/i.test(title)){
+topics.Technology++
+}else if(/russia|kremlin/i.test(title)){
 topics.Russia++
+}else{
+topics.Other++
 }
 
-if(title.includes("sanction")) topics.Regulation++
-if(title.includes("tech")||title.includes("technology")) topics.Technology++
-if(title.includes("digital")||title.includes("crypto")) topics.Digital++
+/* RUSSIA SHARE */
+
+if(title.includes("russia")) russia++
+
+/* SOURCE COUNT */
 
 const domain=(a.domain||"unknown").replace("www.","")
 
@@ -67,12 +86,14 @@ sources[domain]++
 
 })
 
+/* RETURN MORE ARTICLES FOR ANALYTICS */
+
 const result={
 total:articles.length,
 russiaShare:articles.length?(russia/articles.length)*100:0,
 sources:sources,
 topics:topics,
-articles:articles.slice(0,10)
+articles:articles.slice(0,50)
 }
 
 cache=result
