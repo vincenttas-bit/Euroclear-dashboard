@@ -1,40 +1,41 @@
-export default async function handler(req, res) {
+let cache=null
+let lastFetch=0
 
-try {
+export default async function handler(req,res){
 
-const url =
-"https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json&sort=datedesc"
+try{
 
-const response = await fetch(url, {
-method: "GET",
-headers: {
-"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-"Accept": "application/json",
-"Accept-Language": "en-US,en;q=0.9"
+const now=Date.now()
+
+/* cache for 10 minutes */
+
+if(cache && (now-lastFetch)<600000){
+res.status(200).json(cache)
+return
+}
+
+const url="https://api.gdeltproject.org/api/v2/doc/doc?query=Euroclear&mode=ArtList&maxrecords=50&format=json&sort=datedesc"
+
+const response=await fetch(url,{
+headers:{
+"User-Agent":"Mozilla/5.0",
+"Accept":"application/json"
 }
 })
 
-const text = await response.text()
+const data=await response.json()
 
-let data = {}
-
-try {
-data = JSON.parse(text)
-} catch {
-data = {}
-}
-
-let articles = Array.isArray(data.articles) ? data.articles : []
+let articles=Array.isArray(data.articles)?data.articles:[]
 
 /* remove duplicate titles */
 
-const seen = new Set()
+const seen=new Set()
 
-articles = articles.filter(a => {
+articles=articles.filter(a=>{
 
-const title = (a.title || "").toLowerCase()
+const title=(a.title||"").toLowerCase()
 
-if (seen.has(title)) return false
+if(seen.has(title)) return false
 
 seen.add(title)
 
@@ -42,44 +43,51 @@ return true
 
 })
 
-let russia = 0
-let sources = {}
+let russia=0
+let sources={}
 
-articles.forEach(a => {
+articles.forEach(a=>{
 
-const title = (a.title || "").toLowerCase()
+const title=(a.title||"").toLowerCase()
 
-if (title.includes("russia")) russia++
+if(title.includes("russia")) russia++
 
-const domain = (a.domain || "unknown").replace("www.","")
+const domain=(a.domain||"unknown").replace("www.","")
 
-if (!sources[domain]) sources[domain] = 0
+if(!sources[domain]) sources[domain]=0
+
 sources[domain]++
 
 })
 
-res.status(200).json({
+const result={
+total:articles.length,
+russiaShare:articles.length?(russia/articles.length)*100:0,
+sources:sources,
+articles:articles.slice(0,10)
+}
 
-total: articles.length,
+/* update cache */
 
-russiaShare: articles.length
-? (russia / articles.length) * 100
-: 0,
+cache=result
+lastFetch=now
 
-sources: sources,
+res.status(200).json(result)
 
-articles: articles.slice(0,10)
+}catch(err){
 
-})
+/* if API fails return last cached data */
 
-} catch (err) {
-
+if(cache){
+res.status(200).json(cache)
+}else{
 res.status(200).json({
 total:0,
 russiaShare:0,
 sources:{},
 articles:[]
 })
+}
 
 }
 
