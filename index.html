@@ -107,7 +107,6 @@ color:#9fb3c8;
 
 <h1>Euroclear Geopolitical Intelligence Monitor</h1>
 
-
 <div class="kpi-strip">
 
 <div class="kpi">
@@ -126,8 +125,6 @@ color:#9fb3c8;
 </div>
 
 </div>
-
-
 
 <div class="grid">
 
@@ -153,8 +150,6 @@ color:#9fb3c8;
 
 </div>
 
-
-
 <div class="analytics">
 
 <div class="panel">
@@ -169,23 +164,18 @@ color:#9fb3c8;
 
 </div>
 
-
-
 <div class="panel">
-
 <h3>Articles by Region</h3>
 <div id="regionArticles"></div>
-
 </div>
-
-
 
 <script>
 
 window.onload = load
 
 async function load(){
-let data = {}
+
+let data={}
 
 try{
 
@@ -198,14 +188,15 @@ console.log("API error",e)
 
 }
 
+let articles = data.articles || []
 const sources = data.sources || {}
 
-document.getElementById("total").innerText=data.total
-document.getElementById("russiaShare").innerText=data.russiaShare.toFixed(1)+"%"
-document.getElementById("sources").innerText=Object.keys(sources).length
+document.getElementById("total").innerText = data.total || 0
+document.getElementById("russiaShare").innerText = ((data.russiaShare)||0).toFixed(1)+"%"
+document.getElementById("sources").innerText = Object.keys(sources).length
 
 
-/* REMOVE DUPLICATES */
+/* REMOVE DUPLICATES /
 
 const seen=new Set()
 
@@ -233,7 +224,7 @@ else topics.Other++
 })
 
 
-/ * TIME SERIES */
+/ TIME SERIES */
 
 let mentionsByDay={}
 let russiaByDay={}
@@ -256,7 +247,6 @@ russiaByDay[d]++
 
 })
 
-
 const dates=Object.keys(mentionsByDay).sort()
 
 const labels=dates.map(d=>d.substring(0,4)+"-"+d.substring(4,6)+"-"+d.substring(6,8))
@@ -266,11 +256,11 @@ const mentionsValues=dates.map(d=>mentionsByDay[d])
 const russiaTrend=dates.map(d=>{
 let total=mentionsByDay[d]
 let r=russiaByDay[d]
-return total ? (r/total)*100 : 0
+return total ? (r/total)100 : 0
 })
 
 
-/ * CHARTS * /
+/ CHARTS /
 
 new Chart(document.getElementById("mentionsChart").getContext("2d"),{
 type:"line",
@@ -287,7 +277,6 @@ type:"pie",
 data:{labels:Object.keys(topics),datasets:[{data:Object.values(topics)}]}
 })
 
-
 const sortedSources=Object.entries(sources).sort((a,b)=>b[1]-a[1]).slice(0,6)
 
 new Chart(document.getElementById("sourceChart").getContext("2d"),{
@@ -296,7 +285,7 @@ data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1
 })
 
 
-/* NARRATIVE DRIVERS * /
+/ NARRATIVE DRIVERS /
 
 const keywords=[
 "sanctions","frozen assets","russian assets",
@@ -330,7 +319,7 @@ driversDiv.appendChild(item)
 })
 
 
-/ * NEWS * /
+/ NEWS /
 
 const news=document.getElementById("news")
 
@@ -342,7 +331,7 @@ news.appendChild(item)
 })
 
 
-/* REGIONS */
+/ REGIONS */
 
 const regionMap={
 "United States":"US",
