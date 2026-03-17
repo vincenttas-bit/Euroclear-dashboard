@@ -177,73 +177,7 @@ return true
 let russia=0
 let sources={}
 
-/* TRUSTED GLOBAL MEDIA */
 
-const trustedMedia=[
-
-"reuters.com",
-"apnews.com",
-"bloomberg.com",
-"afp.com",
-
-"ft.com",
-"wsj.com",
-"cnbc.com",
-"marketwatch.com",
-"forbes.com",
-
-"politico.com",
-"politico.eu",
-"economist.com",
-
-"bbc.com",
-"bbc.co.uk",
-"theguardian.com",
-"telegraph.co.uk",
-
-"nytimes.com",
-"washingtonpost.com",
-
-"lemonde.fr",
-"lefigaro.fr",
-"lesechos.fr",
-
-"elpais.com",
-"elmundo.es",
-
-"spiegel.de",
-"dw.com",
-"faz.net",
-
-"corriere.it",
-"repubblica.it",
-
-"tass.com",
-"rt.com",
-"ria.ru",
-
-"xinhuanet.com",
-"globaltimes.cn",
-"chinadaily.com.cn",
-
-"nikkei.com",
-"asahi.com",
-"japantimes.co.jp",
-
-"koreaherald.com",
-"koreatimes.co.kr",
-
-"aljazeera.com",
-"arabnews.com",
-
-"thehindu.com",
-"hindustantimes.com",
-
-"smh.com.au",
-"theaustralian.com.au"
-
-]
-  
 /* FIXED TOPIC MODEL */
 
 let topics={
