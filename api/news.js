@@ -97,7 +97,6 @@ const trustedMedia=[
 /* FINANCIAL INFRASTRUCTURE */
 
 "assetservicingtimes.com",
-"globalcustodian.com",
 "thetradenews.com",
 "securitiesfinancetimes.com",
 
