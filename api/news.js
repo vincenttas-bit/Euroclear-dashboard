@@ -50,6 +50,113 @@ throw new Error("Invalid GDELT response")
 }
 
 let articles=data.articles
+  /* TRUSTED MEDIA OUTLETS */
+
+const trustedMedia=[
+
+/* GLOBAL AGENCIES */
+
+"reuters.com",
+"apnews.com",
+"bloomberg.com",
+"afp.com",
+
+/* FINANCIAL MEDIA */
+
+"ft.com",
+"wsj.com",
+"cnbc.com",
+"marketwatch.com",
+"forbes.com",
+
+/* POLICY */
+
+"politico.com",
+"politico.eu",
+"economist.com",
+
+/* UK */
+
+"bbc.com",
+"bbc.co.uk",
+"theguardian.com",
+"telegraph.co.uk",
+
+/* UNITED STATES */
+
+"nytimes.com",
+"washingtonpost.com",
+
+/* BELGIUM */
+
+"demorgen.be",
+"destandaard.be",
+"lesoir.be",
+"lalibre.be",
+
+/* FINANCIAL INFRASTRUCTURE */
+
+"assetservicingtimes.com",
+"globalcustodian.com",
+"thetradenews.com",
+"securitiesfinancetimes.com",
+
+/* GERMANY */
+
+"handelsblatt.com",
+"faz.net",
+"sueddeutsche.de",
+"zeit.de",
+"welt.de",
+
+/* NETHERLANDS */
+
+"nrc.nl",
+"fd.nl",
+"volkskrant.nl",
+
+/* EUROPE */
+
+"lemonde.fr",
+"lefigaro.fr",
+"lesechos.fr",
+"spiegel.de",
+"dw.com",
+"elpais.com",
+"elmundo.es",
+
+/* ASIA */
+
+"nikkei.com",
+"asahi.com",
+"japantimes.co.jp",
+
+/* CHINA */
+
+"caixin.com",
+"chinadaily.com.cn",
+"xinhuanet.com",
+"globaltimes.cn",
+
+/* RUSSIA */
+
+"tass.com",
+"ria.ru"
+
+]
+  /* FILTER ARTICLES BY TRUSTED MEDIA */
+
+articles = articles.filter(a=>{
+
+let domain=(a.domain||"")
+.replace(/^www\./,"")
+.replace(/^amp\./,"")
+.replace(/^m\./,"")
+.toLowerCase()
+
+return trustedMedia.some(d => domain.includes(d))
+
+})
 
 /* REMOVE DUPLICATE TITLES + DOMAIN */
 
