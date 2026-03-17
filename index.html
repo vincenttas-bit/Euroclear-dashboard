@@ -371,13 +371,21 @@ data:{labels:sortedSources.map(s=>s[0]),datasets:[{data:sortedSources.map(s=>s[1
 /* MEDIA REGION OVERRIDE (FOR KNOWN OUTLETS) */
 
 const mediaRegionMap={
+
+/* RUSSIA */
+
 "tass.com":"Russia/CIS",
 "rt.com":"Russia/CIS",
 "ria.ru":"Russia/CIS",
 
+/* GLOBAL */
+
 "reuters.com":"Global",
 "apnews.com":"Global",
 "bloomberg.com":"Global",
+"afp.com":"Global",
+
+/* EUROPE */
 
 "ft.com":"Europe",
 "bbc.com":"Europe",
@@ -390,22 +398,60 @@ const mediaRegionMap={
 "theguardian.com":"Europe",
 "telegraph.co.uk":"Europe",
 
+/* BELGIUM */
+
+"demorgen.be":"Europe",
+"destandaard.be":"Europe",
+"lesoir.be":"Europe",
+"lalibre.be":"Europe",
+
+/* GERMANY */
+
+"handelsblatt.com":"Europe",
+"faz.net":"Europe",
+"sueddeutsche.de":"Europe",
+"zeit.de":"Europe",
+"welt.de":"Europe",
+
+/* NETHERLANDS */
+
+"nrc.nl":"Europe",
+"fd.nl":"Europe",
+"volkskrant.nl":"Europe",
+
+/* FINANCIAL INFRASTRUCTURE */
+
+"assetservicingtimes.com":"Global",
+"globalcustodian.com":"Global",
+"thetradenews.com":"Global",
+"securitiesfinancetimes.com":"Global",
+
+/* NORTH AMERICA */
+
 "nytimes.com":"North America",
 "washingtonpost.com":"North America",
 "wsj.com":"North America",
 "cnbc.com":"North America",
 
+/* ASIA */
+
 "nikkei.com":"Asia",
 "asahi.com":"Asia",
 "japantimes.co.jp":"Asia",
 
+/* CHINA */
+
+"caixin.com":"Asia",
 "xinhuanet.com":"Asia",
+"chinadaily.com.cn":"Asia",
 "globaltimes.cn":"Asia",
+
+/* KOREA */
 
 "koreaherald.com":"Asia",
 "koreatimes.co.kr":"Asia"
-}
 
+}
 /* COUNTRY → REGION */
 
 const regionMap={
