@@ -91,8 +91,11 @@ const trustedMedia=[
 
 "demorgen.be",
 "destandaard.be",
+"standaard.be",
+"nieuwsblad.be",
 "lesoir.be",
 "lalibre.be",
+"belga.com",
 
 /* FINANCIAL INFRASTRUCTURE */
 
